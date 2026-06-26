@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import {
   lookupCURPINMobig,
-  lookupCURPINYoMobile,
   lookupCURPInABIB,
   lookupCURPInAltanMVNO,
   lookupCURPInATT,
@@ -12,7 +11,6 @@ import {
   lookupCURPInLogisticaACN,
   lookupCURPInMirlo,
   lookupCURPInTelcel,
-  loookupCURPINWeeex,
   loookupCURPInVirginMobile,
 } from "@/lib/providers";
 import { validateCURP } from "@/lib/providers/curp";

@@ -1,83 +1,81 @@
-import {
-  AlertTriangle,
-  CircleHelp,
-  Phone,
-  ShieldCheck,
-  XCircle,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DisplayLine } from "@/types";
 
-type Variant = {
-  icon: typeof Phone;
-  badge: string;
-  badgeText: string;
-  ring: string;
-};
+type State = "confirmed" | "possible" | "none" | "error" | "unavailable";
 
-function variantFor(line: DisplayLine): Variant {
-  if (line.isError)
-    return {
-      icon: XCircle,
-      badge: "bg-rose-50 text-rose-700 border-rose-200",
-      badgeText: "Error",
-      ring: "border-rose-200",
-    };
-  if (line.isUnavailable)
-    return {
-      icon: AlertTriangle,
-      badge: "bg-amber-50 text-amber-700 border-amber-200",
-      badgeText: "No disponible",
-      ring: "border-amber-200",
-    };
-  if (line.isNotFound)
-    return {
-      icon: ShieldCheck,
-      badge: "bg-slate-50 text-slate-600 border-slate-200",
-      badgeText: "Sin registro",
-      ring: "border-slate-200",
-    };
-  if (line.isPossible)
-    return {
-      icon: CircleHelp,
-      badge: "bg-amber-50 text-amber-700 border-amber-200",
-      badgeText: "Posible",
-      ring: "border-amber-200",
-    };
-  return {
-    icon: Phone,
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    badgeText: "Confirmada",
-    ring: "border-emerald-200",
-  };
+function stateOf(line: DisplayLine): State {
+  if (line.isError) return "error";
+  if (line.isUnavailable) return "unavailable";
+  if (line.isNotFound) return "none";
+  if (line.isPossible) return "possible";
+  return "confirmed";
 }
 
+const STATE_META: Record<
+  State,
+  { label: string; dot: string; text: string; bar: string }
+> = {
+  confirmed: {
+    label: "Confirmada",
+    dot: "bg-confirmed",
+    text: "text-confirmed",
+    bar: "bg-confirmed",
+  },
+  possible: {
+    label: "Posible",
+    dot: "bg-possible",
+    text: "text-possible",
+    bar: "bg-possible",
+  },
+  none: {
+    label: "Sin registro",
+    dot: "bg-none",
+    text: "text-none",
+    bar: "bg-line-strong",
+  },
+  error: {
+    label: "Error",
+    dot: "bg-error",
+    text: "text-error",
+    bar: "bg-error",
+  },
+  unavailable: {
+    label: "No disponible",
+    dot: "bg-possible",
+    text: "text-possible",
+    bar: "bg-possible",
+  },
+};
+
 export function LineCard({ line }: { line: DisplayLine }) {
-  const v = variantFor(line);
-  const Icon = v.icon;
+  const state = stateOf(line);
+  const meta = STATE_META[state];
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm",
-        v.ring,
-      )}
-    >
-      <Icon className="size-5 shrink-0 text-slate-500" aria-hidden />
+    <div className="relative flex items-center gap-4 overflow-hidden rounded-lg border border-line bg-surface py-3 pr-4 pl-5">
+      <span
+        className={cn("absolute inset-y-0 left-0 w-1", meta.bar)}
+        aria-hidden
+      />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-slate-900">{line.operadora}</p>
-        <p className="truncate text-sm text-slate-600">{line.numero}</p>
+        <p className="truncate font-medium text-ink">{line.operadora}</p>
         {line.disclaimer ? (
-          <p className="mt-1 text-xs text-slate-400">{line.disclaimer}</p>
+          <p className="mt-0.5 truncate text-xs text-ink-faint">
+            {line.disclaimer}
+          </p>
         ) : null}
       </div>
+      <span className="tabular shrink-0 text-sm text-ink-soft">
+        {line.numero}
+      </span>
       <span
         className={cn(
-          "shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-          v.badge,
+          "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium",
+          meta.text,
         )}
       >
-        {v.badgeText}
+        <span className={cn("size-1.5 rounded-full", meta.dot)} aria-hidden />
+        <span className="hidden sm:inline">{meta.label}</span>
       </span>
     </div>
   );

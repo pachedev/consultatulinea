@@ -1,4 +1,5 @@
 import { createCipheriv } from "node:crypto";
+import { fetch as undiciFetch } from "undici";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -46,8 +47,7 @@ async function fetchSubscriptions(encryptedCURP: string): Promise<FetchResult> {
   const url =
     "https://vinculatulinea.com/omv-lineas/v1/omv-services/subscriptions-by-curp?pathName=freedompop&apiName=getSubscriptionsbyCURP";
   const auth = Buffer.from("admin:admin123").toString("base64");
-
-  const response = await fetch(url, {
+  const response = await undiciFetch(url, {
     method: "GET",
     headers: {
       accept: "application/json",
@@ -72,7 +72,10 @@ async function fetchSubscriptions(encryptedCURP: string): Promise<FetchResult> {
     },
   });
 
-  const data = await response.json().catch(() => null);
+  const data = (await response.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
 
   if (!response.ok) {
     console.error(

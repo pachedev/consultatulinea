@@ -30,7 +30,7 @@ export interface ExportLineRecord {
 
 export interface ExportEvidencePayload {
   schemaVersion: 1;
-  source: "mislineas";
+  source: "consultatulinea";
   curp: string;
   generatedAt: string;
   generatedAtLocal: string;

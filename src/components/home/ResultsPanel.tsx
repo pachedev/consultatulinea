@@ -1,119 +1,207 @@
 "use client";
 
-import { RotateCw } from "lucide-react";
-import { LineCard } from "@/components/ui/LineCard";
-import { TOTAL_PROVIDERS } from "@/lib/data/content";
-import type { UseLookupReturn } from "@/lib/hooks/useLookup";
-import { getRiskLevel } from "@/lib/lookup";
-import { cn } from "@/lib/utils";
+import { MessageSquareWarning, Search } from "lucide-react";
+import { useState } from "react";
+import { FilterTabs } from "@/components/home/FilterTabs";
+import { ResultsHeader } from "@/components/home/ResultsHeader";
+import { ResultsList } from "@/components/home/ResultsList";
+import { SITE } from "@/lib/data/site";
+import {
+  buildCsvExport,
+  buildExportEvidencePayload,
+  buildJsonExport,
+  getExportFilename,
+} from "@/lib/export";
+import type { DisplayLine, ExportIntegrity, FilterTab } from "@/types";
 
-export function ResultsPanel({ lookup }: { lookup: UseLookupReturn }) {
-  const {
-    loading,
-    error,
-    timedOut,
-    results,
-    scannedCount,
-    liveMessage,
-    queryTime,
-    retry,
-  } = lookup;
+type Props = {
+  results: DisplayLine[];
+  curp: string;
+  loading: boolean;
+  scannedCount: number;
+  queryTime: Date | null;
+  onNuevaConsulta: () => void;
+};
 
-  // Aún no se ha consultado.
-  if (results === null && !loading && !error && !timedOut) return null;
+export function ResultsPanel({
+  results,
+  curp,
+  loading,
+  scannedCount,
+  queryTime,
+  onNuevaConsulta,
+}: Props) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
-  return (
-    <section className="mt-8 w-full" aria-label="Resultados de la consulta">
-      <p className="sr-only" aria-live="polite">
-        {liveMessage}
-      </p>
-
-      {/* Barra de progreso */}
-      {loading ? (
-        <div className="mb-4">
-          <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>Escaneando operadores…</span>
-            <span>
-              {scannedCount} / {TOTAL_PROVIDERS}
-            </span>
-          </div>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-slate-900 transition-all"
-              style={{
-                width: `${Math.min(100, (scannedCount / TOTAL_PROVIDERS) * 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {/* Error / timeout */}
-      {error || timedOut ? (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
-          <p className="text-sm text-rose-700">
-            {timedOut
-              ? "La consulta tardó demasiado. Intenta de nuevo."
-              : error}
-          </p>
-          <button
-            type="button"
-            onClick={retry}
-            className="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-100"
-          >
-            <RotateCw className="size-4" aria-hidden />
-            Reintentar
-          </button>
-        </div>
-      ) : null}
-
-      {/* Resumen de riesgo */}
-      {results && results.length > 0 ? (
-        <RiskSummary lookupResults={results} />
-      ) : null}
-
-      {/* Lista de resultados */}
-      {results && results.length > 0 ? (
-        <div className="mt-4 grid gap-3">
-          {results.map((line) => (
-            <LineCard key={line.id} line={line} />
-          ))}
-        </div>
-      ) : null}
-
-      {/* Vacío tras consulta completa */}
-      {!loading && !error && !timedOut && results && results.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-          <p className="font-medium text-slate-900">Sin líneas detectadas</p>
-          <p className="mt-1 text-sm text-slate-500">
-            No se encontraron líneas registradas con esta CURP en los operadores
-            consultados.
-          </p>
-        </div>
-      ) : null}
-
-      {queryTime && !loading ? (
-        <p className="mt-4 text-xs text-slate-400">
-          Consulta realizada el {queryTime.toLocaleString("es-MX")}.
-        </p>
-      ) : null}
-    </section>
+  const confirmed = results.filter(
+    (l) => !l.isPossible && !l.isNotFound && !l.isError && !l.isUnavailable,
   );
-}
+  const possible = results.filter(
+    (l) => l.isPossible && !l.isNotFound && !l.isError && !l.isUnavailable,
+  );
+  const errors = results.filter((l) => l.isError);
+  const notFound = results.filter((l) => l.isNotFound);
 
-function RiskSummary({
-  lookupResults,
-}: {
-  lookupResults: NonNullable<UseLookupReturn["results"]>;
-}) {
-  const risk = getRiskLevel(lookupResults);
+  const tabs: { key: FilterTab; label: string; count: number }[] = [
+    { key: "all", label: "Todos", count: results.length },
+    { key: "confirmed", label: "Confirmados", count: confirmed.length },
+    { key: "possible", label: "Posibles", count: possible.length },
+    { key: "errors", label: "Errores", count: errors.length },
+  ];
+
+  const byFilter = (): DisplayLine[] => {
+    switch (activeFilter) {
+      case "confirmed":
+        return [...confirmed, ...notFound];
+      case "possible":
+        return possible;
+      case "errors":
+        return errors;
+      default:
+        return results;
+    }
+  };
+
+  const matchesSearch = (l: DisplayLine) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      l.operadora.toLowerCase().includes(q) ||
+      l.numero.toLowerCase().includes(q)
+    );
+  };
+
+  const base = byFilter().filter(matchesSearch);
+  const visibleResults =
+    activeFilter === "all" ? base.filter((l) => !l.isNotFound) : base;
+  const collapsedNotFound =
+    activeFilter === "all" ? notFound.filter(matchesSearch) : [];
+
+  const exportEnabled = !loading && !!queryTime;
+
+  const download = (filename: string, content: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (format: "csv" | "json") => {
+    if (!queryTime || exporting) return;
+    setExporting(true);
+    setExportMessage(null);
+    try {
+      const payload = buildExportEvidencePayload({
+        curp,
+        queryTime,
+        scannedCount,
+        results,
+      });
+      const res = await fetch("/api/export-signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok)
+        throw new Error("No se pudo generar la firma del documento.");
+      const integrity = (await res.json()) as ExportIntegrity;
+      const content =
+        format === "csv"
+          ? buildCsvExport(payload, integrity)
+          : buildJsonExport(payload, integrity);
+      download(
+        getExportFilename(curp, format),
+        content,
+        format === "csv" ? "text/csv;charset=utf-8" : "application/json",
+      );
+    } catch (err) {
+      setExportMessage(
+        err instanceof Error ? err.message : "No se pudo exportar el archivo.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const hasIncidents = errors.length > 0 || notFound.length > 0;
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-      <span className={cn("size-3 rounded-full", risk.color)} aria-hidden />
-      <div>
-        <p className="font-medium text-slate-900">Nivel: {risk.label}</p>
-        <p className="text-sm text-slate-500">{risk.description}</p>
+    <div className="space-y-5">
+      <ResultsHeader
+        results={results}
+        curp={curp}
+        loading={loading}
+        scannedCount={scannedCount}
+        queryTime={queryTime}
+        onNuevaConsulta={onNuevaConsulta}
+        onExportCsv={() => handleExport("csv")}
+        onExportJson={() => handleExport("json")}
+        exportEnabled={exportEnabled}
+        exporting={exporting}
+      />
+
+      {exportMessage ? (
+        <div className="rounded-xl border border-possible/30 bg-possible-bg px-4 py-3 text-sm text-possible">
+          {exportMessage}
+        </div>
+      ) : null}
+
+      {!loading && hasIncidents ? (
+        <div className="flex gap-3 rounded-xl border border-line bg-surface-2 p-4 text-sm text-ink-soft">
+          <MessageSquareWarning
+            className="mt-0.5 size-5 shrink-0 text-ink-faint"
+            aria-hidden
+          />
+          <p>
+            ¿Una línea no aparece o un operador estuvo no disponible? Es un
+            proyecto comunitario y dependemos de tu feedback.{" "}
+            <a
+              href={SITE.reportFraud}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-ink underline underline-offset-2"
+            >
+              Repórtalo aquí
+            </a>
+            .
+          </p>
+        </div>
+      ) : null}
+
+      <FilterTabs
+        tabs={tabs}
+        active={activeFilter}
+        onChange={setActiveFilter}
+      />
+
+      <div className="relative">
+        <Search
+          className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-faint"
+          aria-hidden
+        />
+        <input
+          type="search"
+          placeholder="Buscar operador o número…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-line bg-surface py-2.5 pr-4 pl-10 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-line-strong focus:ring-2 focus:ring-ink/10"
+        />
       </div>
+
+      <ResultsList
+        loading={loading}
+        visibleResults={visibleResults}
+        collapsedNotFound={collapsedNotFound}
+        activeFilter={activeFilter}
+        activeResultsCount={visibleResults.length + collapsedNotFound.length}
+        searchQuery={searchQuery}
+      />
     </div>
   );
 }

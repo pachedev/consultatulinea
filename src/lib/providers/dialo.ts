@@ -1,3 +1,4 @@
+import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -11,6 +12,7 @@ export async function lookupCURPInDialo(curp: string): Promise<LineResult> {
 
   const validationHeaders = {
     "Content-Type": "application/json",
+    ...BROWSER_HEADERS,
     Origin: "https://dialo.mx",
     Referer: "https://dialo.mx",
   };

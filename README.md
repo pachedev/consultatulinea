@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/banner.png" alt="ConsultaTuLínea" width="100%">
+</p>
+
 <h1 align="center">ConsultaTuLínea</h1>
 
 <p align="center">
@@ -70,6 +74,38 @@ Consultar el CURP de terceras personas sin su consentimiento puede ser contrario
 ConsultaTuLínea no sustituye los servicios oficiales de los operadores ni de la Comisión Reguladora de Telecomunicaciones (CRT). Los nombres comerciales, logotipos y marcas pertenecen a sus respectivos titulares y se usan únicamente con fines informativos.
 
 ---
+
+## Desarrollo
+
+Requisitos: [Node.js](https://nodejs.org) y [pnpm](https://pnpm.io).
+
+```bash
+# 1. Instalar dependencias
+pnpm install
+
+# 2. Variables de entorno (URL del backend, Turnstile)
+cp .env.example .env.local
+
+# 3. Servidor de desarrollo → http://localhost:3000
+pnpm dev
+```
+
+Compilar y servir en producción:
+
+```bash
+pnpm build   # build optimizado
+pnpm start   # sirve el build en http://localhost:3000
+```
+
+Otros comandos:
+
+```bash
+pnpm lint        # revisa estilo y errores (Biome)
+pnpm lint:fix    # corrige automáticamente
+pnpm format      # formatea el código
+```
+
+Stack: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Biome.
 
 ## Créditos
 
