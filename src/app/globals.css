@@ -22,10 +22,15 @@
   --confirmed-bg: #ecfdf5;
   --possible: #b45309;
   --possible-bg: #fffbeb;
+  --possible-strong: #92400e;
   --none: #64748b;
   --none-bg: #f8fafc;
   --error: #be123c;
   --error-bg: #fff1f2;
+  --error-strong: #9f1239;
+  --info: #1d4ed8;
+  --info-bg: #eff6ff;
+  --info-strong: #1e3a8a;
 }
 
 /* Paleta oscura. Se aplica cuando: (a) el usuario fuerza "dark", o
@@ -44,10 +49,15 @@
   --confirmed-bg: #07261d;
   --possible: #fbbf24;
   --possible-bg: #271c06;
+  --possible-strong: #fde68a;
   --none: #94a3b8;
   --none-bg: #181b20;
   --error: #fb7185;
   --error-bg: #2a0e16;
+  --error-strong: #fda4af;
+  --info: #60a5fa;
+  --info-bg: #0c1a2e;
+  --info-strong: #93c5fd;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,10 +75,15 @@
     --confirmed-bg: #07261d;
     --possible: #fbbf24;
     --possible-bg: #271c06;
+    --possible-strong: #fde68a;
     --none: #94a3b8;
     --none-bg: #181b20;
     --error: #fb7185;
     --error-bg: #2a0e16;
+    --error-strong: #fda4af;
+    --info: #60a5fa;
+    --info-bg: #0c1a2e;
+    --info-strong: #93c5fd;
   }
 }
 
@@ -86,10 +101,15 @@
   --color-confirmed-bg: var(--confirmed-bg);
   --color-possible: var(--possible);
   --color-possible-bg: var(--possible-bg);
+  --color-possible-strong: var(--possible-strong);
   --color-none: var(--none);
   --color-none-bg: var(--none-bg);
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
+  --color-error-strong: var(--error-strong);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-strong: var(--info-strong);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
