@@ -110,6 +110,26 @@ export function useLookup(onConsult?: (curp: string) => void) {
 
       setLiveMessage("Consulta completada.");
       clearTimeout(timeoutId);
+
+      fetch("/api/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scanned_count: accumulated.length,
+          confirmed_count: accumulated.filter(
+            (r) => (r.result.lines?.length ?? 0) > 0,
+          ).length,
+          possible_count: accumulated.filter(
+            (r) => (r.result.possibleProviders?.length ?? 0) > 0,
+          ).length,
+          error_count: accumulated.filter(
+            (r) => !!r.result.error || r.result.temporaryUnavailable,
+          ).length,
+          has_results: accumulated.some(
+            (r) => (r.result.lines?.length ?? 0) > 0,
+          ),
+        }),
+      }).catch(() => {});
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if ((err as Error)?.name === "AbortError") return;

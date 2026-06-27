@@ -13,6 +13,7 @@ const BASE_HEADERS = {
 };
 
 const MAX_ATTEMPTS = 3;
+const BLOCKED = Symbol("blocked");
 
 /**
  * Devuelve un fetch que, si hay ATT_PROXIES, sale por un proxy aleatorio.
@@ -41,7 +42,7 @@ function getProxiedFetch(): typeof undiciFetch {
   return (input, init) => undiciFetch(input, { ...init, dispatcher });
 }
 
-async function attempt(curp: string): Promise<LineResult | null> {
+async function attempt(curp: string): Promise<LineResult | null | typeof BLOCKED> {
   const uuid = crypto.randomUUID();
   const proxiedFetch = getProxiedFetch();
 
@@ -57,6 +58,7 @@ async function attempt(curp: string): Promise<LineResult | null> {
     },
   );
 
+  if (sessionResponse.status === 403 || sessionResponse.status === 429) return BLOCKED;
   if (!sessionResponse.ok) return null;
 
   const sessionData = (await sessionResponse.json()) as { status: string };
@@ -135,10 +137,11 @@ export async function lookupCURPInATT(curp: string): Promise<LineResult> {
       console.error(`AT&T attempt ${i + 1} threw:`, err);
       return null;
     });
+    if (result === BLOCKED) {
+      return { company: "AT&T", lines: [], temporaryUnavailable: true };
+    }
     if (result !== null) return result;
-    console.error(
-      `AT&T attempt ${i + 1} failed, retrying with different proxy...`,
-    );
+    console.error(`AT&T attempt ${i + 1} failed, retrying with different proxy...`);
   }
 
   return {
