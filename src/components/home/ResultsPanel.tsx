@@ -1,11 +1,11 @@
 "use client";
 
-import { MessageSquareWarning, Search } from "lucide-react";
+import { Flag, MessageSquareWarning, Search } from "lucide-react";
 import { useState } from "react";
 import { FilterTabs } from "@/components/home/FilterTabs";
+import { ReportModal } from "@/components/home/ReportModal";
 import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { ResultsList } from "@/components/home/ResultsList";
-import { SITE } from "@/lib/data/site";
 import {
   buildCsvExport,
   buildExportEvidencePayload,
@@ -35,6 +35,7 @@ export function ResultsPanel({
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const confirmed = results.filter(
     (l) => !l.isPossible && !l.isNotFound && !l.isError && !l.isUnavailable,
@@ -153,26 +154,26 @@ export function ResultsPanel({
       ) : null}
 
       {!loading && hasIncidents ? (
-        <div className="flex gap-3 rounded-xl border border-line bg-surface-2 p-4 text-sm text-ink-soft">
+        <div className="flex gap-3 rounded-xl border border-possible/30 bg-possible-bg p-4 text-sm text-possible">
           <MessageSquareWarning
-            className="mt-0.5 size-5 shrink-0 text-ink-faint"
+            className="mt-0.5 size-5 shrink-0"
             aria-hidden
           />
           <p>
-            ¿Una línea no aparece o un operador estuvo no disponible? Es un
-            proyecto comunitario y dependemos de tu feedback.{" "}
-            <a
-              href={SITE.reportFraud}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-ink underline underline-offset-2"
+            Uno o más operadores no respondieron.{" "}
+            <button
+              type="button"
+              onClick={() => setReportOpen(true)}
+              className="font-medium underline underline-offset-2"
             >
               Repórtalo aquí
-            </a>
-            .
+            </button>{" "}
+            para que lo revisemos.
           </p>
         </div>
       ) : null}
+
+      <ReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
 
       <FilterTabs
         tabs={tabs}
@@ -202,6 +203,27 @@ export function ResultsPanel({
         activeResultsCount={visibleResults.length + collapsedNotFound.length}
         searchQuery={searchQuery}
       />
+
+      {!loading && results.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setReportOpen(true)}
+          className="group flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 px-4 py-3.5 text-left text-sm text-ink-soft transition-colors hover:border-line-strong hover:bg-surface hover:text-ink"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-ink-faint transition-colors group-hover:border-line-strong group-hover:text-ink">
+            <Flag className="size-4" aria-hidden />
+          </span>
+          <span>
+            <span className="block font-medium text-ink">
+              ¿Algo no está bien?
+            </span>
+            <span className="text-xs">
+              Reporta líneas incorrectas, operadores que fallan o cualquier
+              problema con los resultados.
+            </span>
+          </span>
+        </button>
+      ) : null}
     </div>
   );
 }

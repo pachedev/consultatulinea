@@ -1,116 +1,29 @@
-"use client";
+import type { Metadata } from "next";
+import { HomeView } from "@/components/home/HomeView";
 
-import { type FormEvent, useState } from "react";
-import { CoverageSection } from "@/components/home/CoverageSection";
-import { CurpForm } from "@/components/home/CurpForm";
-import { EmptyState } from "@/components/home/EmptyState";
-import { FaqSection } from "@/components/home/FaqSection";
-import { HowItWorks } from "@/components/home/HowItWorks";
-import { PrivacySection } from "@/components/home/PrivacySection";
-import { ResultsPanel } from "@/components/home/ResultsPanel";
-import { CURP_REGEX } from "@/lib/curp";
-import { TOTAL_PROVIDERS } from "@/lib/data/content";
-import { useCurpHistory } from "@/lib/hooks/useCurpHistory";
-import { useLookup } from "@/lib/hooks/useLookup";
-import { cn } from "@/lib/utils";
+export const metadata: Metadata = {
+  title: "ConsultaTuLínea — Líneas registradas a tu nombre en México",
+  description:
+    "Consulta qué líneas telefónicas móviles están registradas a tu CURP en México. Escanea más de 80 operadores y marcas en un solo lugar: Telcel, AT&T, Movistar, Bait y más.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "ConsultaTuLínea — Líneas registradas a tu nombre en México",
+    description:
+      "¿Cuántas líneas móviles están a tu nombre? Ingresa tu CURP y consulta en segundos más de 80 operadores en México.",
+    url: "https://consultatulinea.mx/",
+  },
+  keywords: [
+    "consultar líneas telefónicas México",
+    "CURP registro telefónico",
+    "RNUTM consulta",
+    "líneas a mi nombre",
+    "consulta telefónica CURP",
+    "registro nacional usuarios telefonía móvil",
+    "Telcel AT&T Movistar líneas registradas",
+    "verificar líneas celular México",
+  ],
+};
 
-export default function Home() {
-  const [curp, setCurp] = useState("");
-  const [submittedCurp, setSubmittedCurp] = useState("");
-  const { history, saveToHistory } = useCurpHistory();
-  const lookup = useLookup();
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!CURP_REGEX.test(curp)) return;
-    saveToHistory(curp);
-    setSubmittedCurp(curp);
-    lookup.consultar(curp);
-  };
-
-  const onNuevaConsulta = () => {
-    lookup.reset();
-    setCurp("");
-    setSubmittedCurp("");
-  };
-
-  const hasResults = lookup.results !== null;
-
-  const form = (
-    <CurpForm
-      curp={curp}
-      setCurp={setCurp}
-      loading={lookup.loading}
-      error={lookup.error}
-      timedOut={lookup.timedOut}
-      history={history}
-      onSubmit={onSubmit}
-      onRetry={lookup.retry}
-    />
-  );
-
-  return (
-    <main className="flex flex-1 flex-col">
-      <section className="border-b border-line">
-        <div
-          className={cn(
-            "mx-auto w-full px-4 py-10 sm:py-14",
-            hasResults ? "max-w-6xl" : "max-w-2xl",
-          )}
-        >
-          <header className="mb-8">
-            <p className="tabular mb-3 text-xs tracking-[0.18em] text-ink-faint uppercase">
-              Registro Nacional de Usuarios de Telefonía Móvil
-            </p>
-            <h1 className="font-display text-3xl leading-[1.05] font-bold tracking-tight text-balance text-ink sm:text-4xl">
-              Qué líneas hay registradas a tu nombre
-            </h1>
-            {!hasResults ? (
-              <p className="mt-4 max-w-md text-pretty text-ink-soft">
-                Ingresa tu CURP y escanea en un solo lugar los{" "}
-                <span className="tabular text-ink">{TOTAL_PROVIDERS}</span>{" "}
-                operadores y marcas que registran líneas móviles en México.
-              </p>
-            ) : null}
-          </header>
-
-          {hasResults ? (
-            <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
-              <div className="lg:col-span-5 xl:col-span-4">
-                <div className="lg:sticky lg:top-20">
-                  <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
-                    {form}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 lg:col-span-7 lg:mt-0 xl:col-span-8">
-                <ResultsPanel
-                  results={lookup.results ?? []}
-                  curp={submittedCurp}
-                  loading={lookup.loading}
-                  scannedCount={lookup.scannedCount}
-                  queryTime={lookup.queryTime}
-                  onNuevaConsulta={onNuevaConsulta}
-                />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6">
-                {form}
-              </div>
-              <div className="mt-6">
-                <EmptyState />
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-
-      <HowItWorks />
-      <CoverageSection />
-      <PrivacySection />
-      <FaqSection />
-    </main>
-  );
+export default function HomePage() {
+  return <HomeView />;
 }

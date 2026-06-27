@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUpRight, Search } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { StatusChip } from "@/components/operators/StatusChip";
+import type { OperatorStatusOverride } from "@/lib/api/status";
 import type { OperatorDisplayStatus } from "@/lib/data/operators";
 import type { OperatorView } from "@/lib/operatorPages";
 import { cn } from "@/lib/utils";
@@ -17,10 +18,23 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "pending", label: "Pendiente" },
 ];
 
+function findOverride(
+  overrides: OperatorStatusOverride[],
+  operatorName: string,
+): OperatorStatusOverride | undefined {
+  const n = operatorName.toLowerCase();
+  return overrides.find((o) => {
+    const k = o.operator_name.toLowerCase();
+    return n.includes(k) || k.includes(n);
+  });
+}
+
 export function OperatorsDirectory({
   operators,
+  statusOverrides = [],
 }: {
   operators: OperatorView[];
+  statusOverrides?: OperatorStatusOverride[];
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -34,8 +48,28 @@ export function OperatorsDirectory({
     });
   }, [operators, query, filter]);
 
+  const degraded = statusOverrides.filter((o) => o.state !== "available");
+
   return (
     <div>
+      {degraded.length > 0 ? (
+        <div className="mb-5 flex gap-3 rounded-xl border border-possible/30 bg-possible-bg p-4 text-sm text-possible">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <div>
+            <p className="font-medium">Algunos operadores reportan incidencias</p>
+            <ul className="mt-1 space-y-0.5 text-xs">
+              {degraded.map((o) => (
+                <li key={o.operator_name}>
+                  <strong>{o.operator_name}</strong>
+                  {o.state === "paused" ? " — pausado" : " — no disponible"}
+                  {o.note ? `: ${o.note}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-3">
         <div className="relative">
           <Search
@@ -81,23 +115,37 @@ export function OperatorsDirectory({
         </p>
       ) : (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-          {filtered.map((o) => (
-            <li key={o.slug}>
-              <Link
-                href={`/operadores/${o.slug}`}
-                className="group flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line-strong"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-ink">{o.name}</p>
-                  <StatusChip status={o.status} className="mt-1.5" />
-                </div>
-                <ArrowUpRight
-                  className="size-4 shrink-0 text-ink-faint transition-colors group-hover:text-ink"
-                  aria-hidden
-                />
-              </Link>
-            </li>
-          ))}
+          {filtered.map((o) => {
+            const override = findOverride(statusOverrides, o.name);
+            const isDown = override && override.state !== "available";
+            return (
+              <li key={o.slug}>
+                <Link
+                  href={`/operadores/${o.slug}`}
+                  className={cn(
+                    "group flex items-center justify-between gap-3 rounded-lg border bg-surface p-4 transition-colors hover:border-line-strong",
+                    isDown ? "border-possible/40" : "border-line",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-ink">{o.name}</p>
+                    <StatusChip status={o.status} className="mt-1.5" />
+                    {isDown ? (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-possible">
+                        <AlertTriangle className="size-3" aria-hidden />
+                        {override.state === "paused" ? "Pausado" : "No disponible"}
+                        {override.note ? ` — ${override.note}` : ""}
+                      </p>
+                    ) : null}
+                  </div>
+                  <ArrowUpRight
+                    className="size-4 shrink-0 text-ink-faint transition-colors group-hover:text-ink"
+                    aria-hidden
+                  />
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -1,14 +1,18 @@
-import { ArrowLeft, ExternalLink, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ExternalLink, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { StatusChip } from "@/components/operators/StatusChip";
+import { fetchStatus } from "@/lib/api/status";
 import {
   getOperatorBySlug,
   getOperatorSlugs,
   type OperatorView,
 } from "@/lib/operatorPages";
 import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 type Params = { slug: string };
 
@@ -27,9 +31,54 @@ export async function generateMetadata({
 
   return {
     title: `${operator.name} — consulta de líneas`,
-    description: `Cómo consultar las líneas registradas con ${operator.name} en México: estado de la consulta, portal oficial y guía.`,
+    description: `Cómo consultar las líneas telefónicas registradas con ${operator.name} en México. Estado de la integración, portal oficial de vinculación y guía paso a paso.`,
     alternates: { canonical: `/operadores/${operator.slug}` },
+    openGraph: {
+      title: `${operator.name} — ConsultaTuLínea`,
+      description: `Verifica qué líneas tienes registradas con ${operator.name} en México usando tu CURP.`,
+    },
   };
+}
+
+const BASE = "https://consultatulinea.mx";
+
+function makeBreadcrumbJsonLd(operator: OperatorView) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Inicio",
+        item: `${BASE}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Operadores",
+        item: `${BASE}/operadores`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: operator.name,
+        item: `${BASE}/operadores/${operator.slug}`,
+      },
+    ],
+  };
+}
+
+function makeOrganizationJsonLd(operator: OperatorView) {
+  const obj: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: operator.name,
+    url: operator.website ?? undefined,
+    description: `Operador de telefonía móvil en México. ${operator.status === "supported" ? "Consulta directa disponible en ConsultaTuLínea." : "Consulta a través del portal oficial del operador."}`,
+  };
+  if (!obj.url) delete obj.url;
+  return obj;
 }
 
 function guidance(operator: OperatorView): string {
@@ -45,6 +94,14 @@ function guidance(operator: OperatorView): string {
   return "Aún no integramos la consulta automática de este operador. Por ahora, usa su portal oficial.";
 }
 
+function findOverride(overrides: { operator_name: string; state: string; note: string | null }[], operatorName: string) {
+  const n = operatorName.toLowerCase();
+  return overrides.find((o) => {
+    const k = o.operator_name.toLowerCase();
+    return n.includes(k) || k.includes(n);
+  });
+}
+
 export default async function OperatorPage({
   params,
 }: {
@@ -54,8 +111,15 @@ export default async function OperatorPage({
   const operator = getOperatorBySlug(slug);
   if (!operator) notFound();
 
+  const status = await fetchStatus();
+  const override = findOverride(status.operators, operator.name);
+  const isDown = override && override.state !== "available";
+
   return (
     <main className="flex flex-1 flex-col">
+      <JsonLd data={makeBreadcrumbJsonLd(operator)} />
+      <JsonLd data={makeOrganizationJsonLd(operator)} />
+
       <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
         <Link
           href="/operadores"
@@ -69,10 +133,32 @@ export default async function OperatorPage({
           <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             {operator.name}
           </h1>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusChip status={operator.status} />
+            {isDown ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-possible/30 bg-possible-bg px-2.5 py-0.5 text-xs font-medium text-possible">
+                <AlertTriangle className="size-3" aria-hidden />
+                {override.state === "paused" ? "Pausado" : "No disponible"}
+              </span>
+            ) : null}
           </div>
         </header>
+
+        {isDown ? (
+          <div className="mt-6 flex gap-3 rounded-xl border border-possible/30 bg-possible-bg p-4 text-sm text-possible">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
+            <div>
+              <p className="font-medium">
+                {override.state === "paused"
+                  ? "Consulta pausada temporalmente"
+                  : "Operador no disponible"}
+              </p>
+              {override.note ? (
+                <p className="mt-1 text-xs">{override.note}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         <section className="mt-8 rounded-xl border border-line bg-surface p-6">
           <h2 className="text-sm font-medium tracking-wide text-ink-soft uppercase">
@@ -81,7 +167,7 @@ export default async function OperatorPage({
           <p className="mt-2 text-pretty text-ink">{guidance(operator)}</p>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            {operator.status === "supported" ? (
+            {operator.status === "supported" && !isDown ? (
               <Link
                 href="/"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-5 py-2.5 font-medium text-paper transition hover:opacity-90"
@@ -97,7 +183,7 @@ export default async function OperatorPage({
                 rel="noopener noreferrer nofollow"
                 className={cn(
                   "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-medium transition",
-                  operator.status === "supported"
+                  operator.status === "supported" && !isDown
                     ? "border border-line text-ink hover:border-line-strong"
                     : "bg-ink text-paper hover:opacity-90",
                 )}

@@ -1,6 +1,7 @@
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { Brand } from "@/components/layout/Brand";
+import { ReportButton } from "@/components/layout/ReportButton";
 import { SITE } from "@/lib/data/site";
 
 export function Footer() {
@@ -59,6 +60,9 @@ export function Footer() {
                 <Heart className="size-3.5" aria-hidden />
                 Apoyar el proyecto
               </a>
+            </li>
+            <li>
+              <ReportButton />
             </li>
             <li>Licencia GPL-2.0</li>
             <li>
