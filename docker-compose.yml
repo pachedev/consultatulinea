@@ -1,0 +1,21 @@
+services:
+  web:
+    container_name: consultatulinea
+    build:
+      context: .
+      # NEXT_PUBLIC_* se hornean en el bundle — rebuild requerido si cambian.
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-change-me}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      # Estas sobreescriben .env en runtime (sin rebuild).
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
+      BACKEND_API_KEY: ${BACKEND_API_KEY:-}
+      ATT_PROXIES: ${ATT_PROXIES:-}
+      EXPORT_SIGNING_SECRET: ${EXPORT_SIGNING_SECRET:-}
+      EXPORT_SIGNING_KEY_ID: ${EXPORT_SIGNING_KEY_ID:-local-unsigned}
+    restart: unless-stopped
