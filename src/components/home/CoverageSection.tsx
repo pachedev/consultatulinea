@@ -41,13 +41,11 @@ export function CoverageSection() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-surface px-8 py-6 text-center">
+    <div className="flex flex-col-reverse gap-1 bg-surface px-8 py-6 text-center">
+      <dt className="text-xs tracking-wide text-ink-soft uppercase">{label}</dt>
       <dd className="tabular font-display text-3xl font-bold text-ink">
         {value}
       </dd>
-      <dt className="mt-1 text-xs tracking-wide text-ink-soft uppercase">
-        {label}
-      </dt>
     </div>
   );
 }

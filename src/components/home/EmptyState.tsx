@@ -8,21 +8,21 @@ export function EmptyState() {
         <ShieldCheck className="size-6" aria-hidden />
       </div>
       <div className="mt-4 text-center">
-        <h3 className="font-display text-xl font-bold tracking-tight text-ink">
+        <h2 className="font-display text-xl font-bold tracking-tight text-ink">
           Listo para revisar tus líneas
-        </h3>
+        </h2>
         <p className="mx-auto mt-1.5 max-w-md text-sm text-ink-soft">
           Aquí aparecerán los resultados: líneas confirmadas, coincidencias
           posibles y operadores revisados.
         </p>
       </div>
 
-      <dl className="mt-6 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-xl border border-line bg-surface p-4 text-center">
-          <dd className="tabular font-display text-2xl font-bold text-ink">
+      <div className="mt-6 grid gap-2 sm:grid-cols-3">
+        <div className="flex flex-col-reverse gap-1 rounded-xl border border-line bg-surface p-4 text-center">
+          <p className="text-xs text-ink-soft">Marcas monitoreadas</p>
+          <p className="tabular font-display text-2xl font-bold text-ink">
             {TOTAL_PROVIDERS}+
-          </dd>
-          <dt className="mt-1 text-xs text-ink-soft">Marcas monitoreadas</dt>
+          </p>
         </div>
         {KNOWN_PROVIDERS.slice(0, 2).map((p) => (
           <div
@@ -33,7 +33,7 @@ export function EmptyState() {
             <span className="text-sm font-medium text-ink-soft">{p.name}</span>
           </div>
         ))}
-      </dl>
+      </div>
     </div>
   );
 }

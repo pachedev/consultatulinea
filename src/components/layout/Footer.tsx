@@ -80,8 +80,8 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-4 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-t border-line bg-surface-2">
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-4 text-xs text-ink-soft sm:flex-row sm:items-center sm:justify-between">
           <p>
             No almacenamos CURP, números ni resultados. Las consultas se
             ejecutan desde tu navegador.
