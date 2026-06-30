@@ -119,13 +119,13 @@ export function ReportModal({ open, onClose, operator }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/40 p-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-line bg-paper shadow-xl">
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-4">
           <h2 className="font-semibold text-ink">Enviar reporte</h2>
           <button
             type="button"
@@ -147,7 +147,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
+          <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto px-5 py-5">
             <div>
               <label
                 htmlFor="report-kind"
@@ -236,6 +236,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 siteKey={SITE_KEY}
                 onVerify={setToken}
                 onExpire={() => setToken("")}
+                onError={(msg) => { setToken(""); setErrorMsg(msg); }}
                 resetKey={resetKey}
               />
             ) : null}

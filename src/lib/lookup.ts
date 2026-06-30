@@ -13,6 +13,7 @@ export function transformApiResponse(
         operadora: label,
         numero: "Temporalmente no disponible",
         isUnavailable: true,
+        portalUrl: result.portalUrl,
       });
       continue;
     }
@@ -25,6 +26,7 @@ export function transformApiResponse(
             operadora: posible,
             numero: "Error al consultar",
             isError: true,
+            portalUrl: result.portalUrl,
           });
         }
       } else {
@@ -34,6 +36,7 @@ export function transformApiResponse(
           operadora: label,
           numero: "Error al consultar",
           isError: true,
+          portalUrl: result.portalUrl,
         });
       }
       continue;

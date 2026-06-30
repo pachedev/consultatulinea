@@ -1,4 +1,5 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
+import { proxyFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -13,13 +14,14 @@ function signal12s(): AbortController {
 
 export async function lookupCURPInIENTC(curp: string): Promise<LineResult> {
   try {
-    const authForm = new FormData();
-    authForm.append("grant_type", "client_credentials");
-
-    const authRes = await fetch("https://api-iso-prod.ientc.dev/auth/jwt/token", {
+    const authRes = await proxyFetch("https://api-iso-prod.ientc.dev/auth/jwt/token", {
       method: "POST",
-      headers: { ...BROWSER_HEADERS, Authorization: AUTH_HEADER },
-      body: authForm,
+      headers: {
+        ...BROWSER_HEADERS,
+        Authorization: AUTH_HEADER,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
       signal: signal12s().signal,
     });
 
@@ -33,9 +35,9 @@ export async function lookupCURPInIENTC(curp: string): Promise<LineResult> {
       };
     }
 
-    const { access_token } = await authRes.json();
+    const { access_token } = await authRes.json() as { access_token: string };
 
-    const res = await fetch(
+    const res = await proxyFetch(
       `https://api-iso-prod.ientc.dev/vinculacion/number/get-phones?curp=${curp}`,
       {
         headers: { ...BROWSER_HEADERS, Authorization: `Bearer ${access_token}` },
@@ -44,7 +46,7 @@ export async function lookupCURPInIENTC(curp: string): Promise<LineResult> {
     );
 
     if (res.status === 404) {
-      const data = await res.json().catch(() => null);
+      const data = await res.json().catch(() => null) as { detail?: { code?: string } } | null;
       if (data?.detail?.code === "No hay usuarios con ese RFC o CURP") {
         return { company: "IENTC", lines: [], isRegistered: false };
       }

@@ -1,10 +1,11 @@
 import crypto from "node:crypto";
-import https from "node:https";
 
+import { residentialFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const BASE_HOST = "registro.telcel.com";
+const REQUEST_TIMEOUT_MS = 10000;
 const LOG_PREFIX = "[telcel]";
 const LOOKUP_MAX_ATTEMPTS = 2;
 const LOOKUP_RETRY_DELAYS_MS = [1000];
@@ -72,6 +73,7 @@ function buildHeaders() {
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
     Accept: "application/json, text/plain, */*",
+    "Accept-Encoding": "gzip, deflate, br",
     token: generateJWT(),
   };
 }
@@ -98,52 +100,31 @@ async function postJSON<T>(
   data: T | null;
   raw: string;
 }> {
-  return new Promise((resolve) => {
-    const req = https.request(
-      {
-        hostname: BASE_HOST,
-        path,
-        method: "POST",
-        headers,
-        rejectUnauthorized: false,
-        timeout: 10000,
-      },
-      (res) => {
-        let data = "";
+  // Telcel bloquea datacenter Y Tor → sale por residentialFetch.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-        res.on("data", (chunk) => {
-          data += chunk;
-        });
-
-        res.on("end", () => {
-          let parsed: T | null = null;
-
-          try {
-            parsed = JSON.parse(data);
-          } catch {}
-
-          resolve({
-            ok: res.statusCode === 200,
-            status: res.statusCode || 0,
-            data: parsed,
-            raw: data,
-          });
-        });
-      },
-    );
-
-    req.on("timeout", () => {
-      req.destroy();
-      resolve({ ok: false, status: 0, data: null, raw: "timeout" });
+  try {
+    const res = await residentialFetch(`https://${BASE_HOST}${path}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
-    req.on("error", (e) => {
-      resolve({ ok: false, status: 0, data: null, raw: String(e) });
-    });
+    const raw = await res.text();
+    let parsed: T | null = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {}
 
-    req.write(JSON.stringify(body));
-    req.end();
-  });
+    return { ok: res.status === 200, status: res.status, data: parsed, raw };
+  } catch (e) {
+    const isTimeout = (e as Error)?.name === "AbortError";
+    return { ok: false, status: 0, data: null, raw: isTimeout ? "timeout" : String(e) };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function isRetryableResponse(status: number, raw: string) {

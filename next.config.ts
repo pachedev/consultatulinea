@@ -12,13 +12,15 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // Turnstile requiere cargar su JS desde challenges.cloudflare.com
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self'",
-      // Permite que el frontend llame al backend API (noticias/estado/reportes).
-      // Ajustar el dominio del backend en producción.
-      "connect-src 'self' https://api.consultatulinea.mx",
+      // Turnstile renderiza dentro de un iframe en challenges.cloudflare.com
+      "frame-src https://challenges.cloudflare.com",
+      // Llamadas al backend API + verificación Turnstile desde el cliente
+      "connect-src 'self' https://api.consultatulinea.mx https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
     ].join("; "),
   },

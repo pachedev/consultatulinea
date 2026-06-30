@@ -25,12 +25,23 @@ interface Props {
   siteKey: string;
   onVerify: (token: string) => void;
   onExpire?: () => void;
+  onError?: (msg: string) => void;
   resetKey?: number;
 }
 
-export function Turnstile({ siteKey, onVerify, onExpire, resetKey }: Props) {
+export function Turnstile({ siteKey, onVerify, onExpire, onError, resetKey }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+
+  // Guardamos los callbacks en refs para que `mount` NO dependa de su identidad.
+  // Si dependiera, cada render del padre (con callbacks inline) re-montaría el
+  // widget en bucle, disparando 403 por rate limit de Cloudflare.
+  const onVerifyRef = useRef(onVerify);
+  const onExpireRef = useRef(onExpire);
+  const onErrorRef = useRef(onError);
+  onVerifyRef.current = onVerify;
+  onExpireRef.current = onExpire;
+  onErrorRef.current = onError;
 
   const mount = useCallback(() => {
     if (!containerRef.current || !window.turnstile) return;
@@ -41,10 +52,12 @@ export function Turnstile({ siteKey, onVerify, onExpire, resetKey }: Props) {
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
       theme: "auto",
-      callback: onVerify,
-      "expired-callback": onExpire,
+      callback: (token) => onVerifyRef.current(token),
+      "expired-callback": () => onExpireRef.current?.(),
+      "error-callback": () =>
+        onErrorRef.current?.("Error en la verificación anti-bot. Recarga la página e intenta de nuevo."),
     });
-  }, [siteKey, onVerify, onExpire]);
+  }, [siteKey]);
 
   useEffect(() => {
     if (window.turnstile) {

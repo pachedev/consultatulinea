@@ -6,4 +6,8 @@ export const BROWSER_HEADERS: Record<string, string> = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   Accept: "application/json, text/plain, */*",
   "Accept-Language": "es-MX,es;q=0.9",
+  // Pide respuesta comprimida. undici la descomprime de forma transparente al
+  // leer .json()/.text(). Reduce 60-90% los bytes que pasan por el proxy
+  // residencial (facturado por GB) y acelera el resto.
+  "Accept-Encoding": "gzip, deflate, br",
 };

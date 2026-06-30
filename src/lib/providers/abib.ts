@@ -1,4 +1,5 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
+import { proxyFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -9,7 +10,7 @@ export async function lookupCURPInABIB(curp: string): Promise<LineResult> {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch(`https://erp.abib.com.mx/api/lineas/${curp}`, {
+    const res = await proxyFetch(`https://erp.abib.com.mx/api/lineas/${curp}`, {
       headers: { ...BROWSER_HEADERS, Accept: "application/json" },
       signal: controller.signal,
     });
@@ -24,9 +25,9 @@ export async function lookupCURPInABIB(curp: string): Promise<LineResult> {
       };
     }
 
-    const data = await res.json();
+    const data = await res.json() as { status?: unknown } | null;
 
-    if (!data.status) {
+    if (!data?.status) {
       return { company: "ABIB", lines: [], isRegistered: false };
     }
 

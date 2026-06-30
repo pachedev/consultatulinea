@@ -7,6 +7,8 @@ export type LineResult = {
   notFoundProviders?: string[];
   error?: string;
   temporaryUnavailable?: boolean;
+  /** Portal oficial para consulta manual cuando la consulta automática falla. */
+  portalUrl?: string;
   rawApiResponse?: unknown;
 };
 
@@ -19,6 +21,7 @@ export interface DisplayLine {
   isNotFound?: boolean;
   isError?: boolean;
   isUnavailable?: boolean;
+  portalUrl?: string;
 }
 
 export interface ExportLineRecord {
@@ -59,6 +62,7 @@ export interface ProviderResult {
   notFoundProviders?: string[];
   error?: string;
   temporaryUnavailable?: boolean;
+  portalUrl?: string;
   rawApiResponse?: unknown;
 }
 

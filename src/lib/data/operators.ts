@@ -43,7 +43,12 @@ export const OPERATORS: OperatorEntry[] = [
     status: "paused",
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
-  { name: "AT&T / Unefon / WIM", status: "supported" },
+  {
+    name: "AT&T / Unefon / WIM",
+    status: "paused",
+    reason:
+      "Su portal bloquea peticiones desde servidor. Consulta directamente en el portal oficial de AT&T.",
+  },
   { name: "Bait", status: "supported" },
   { name: "Beneleit Móvil", status: "supported" },
   {

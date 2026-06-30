@@ -1,19 +1,26 @@
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 import type { NextRequest } from "next/server";
 import {
   lookupCURPINMobig,
   lookupCURPInABIB,
   lookupCURPInAltanMVNO,
-  lookupCURPInATT,
   lookupCURPInBeneleit,
   lookupCURPInDialo,
   lookupCURPInFreedompop,
   lookupCURPInIENTC,
   lookupCURPInLogisticaACN,
+  lookupCURPInMegamovil,
   lookupCURPInMirlo,
   lookupCURPInTelcel,
+  lookupCURPINYoMobile,
   loookupCURPInVirginMobile,
+  loookupCURPINWeeex,
 } from "@/lib/providers";
 import { validateCURP } from "@/lib/providers/curp";
+import { cachedLookup } from "@/lib/providers/_cache";
+import { getPortalUrl } from "@/lib/providers/_portals";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
@@ -22,10 +29,16 @@ const providers: Array<{
   provider: string;
   lookupFunction: (curp: string) => Promise<LineResult | LineResult[]>;
 }> = [
-  {
-    provider: "AT&T",
-    lookupFunction: lookupCURPInATT,
-  },
+  // {
+  //   provider: "AT&T",
+  //   lookupFunction: lookupCURPInATT,
+  //   // Deshabilitado: el portal usa Shape Security con challenge JS client-side.
+  //   // Probado (2026-06-29) que devuelve 403 incluso desde IP residencial con un
+  //   // cliente curl normal — NO es bloqueo por IP ni por fingerprint TLS, sino por
+  //   // token anti-bot que solo genera un navegador ejecutando su JS. Ningún proxy
+  //   // (Tor/Dante/residencial/comercial) lo resuelve. Requeriría Puppeteer stealth.
+  //   // operators.ts lo marca como "paused" → el usuario consulta att.com.mx directo.
+  // },
   {
     provider: "Telcel",
     lookupFunction: lookupCURPInTelcel,
@@ -54,11 +67,10 @@ const providers: Array<{
     provider: "Logistica ACN (FedeGo!, Flash Mobile, Dua)",
     lookupFunction: lookupCURPInLogisticaACN,
   },
-  // {
-  //   provider: "Mega Móvil",
-  //   lookupFunction: lookupCURPInMegamovil,
-  //   // Disabled: WAF blocks server IP (Attack ID: 20000018)
-  // },
+  {
+    provider: "Mega Móvil",
+    lookupFunction: lookupCURPInMegamovil,
+  },
   {
     provider: "Mirlo",
     lookupFunction: lookupCURPInMirlo,
@@ -86,18 +98,18 @@ const providers: Array<{
     provider: "Virgin Mobile",
     lookupFunction: loookupCURPInVirginMobile,
   },
-  // {
-  //   provider: "Weex",
-  //   lookupFunction: loookupCURPINWeeex,
-  // },
+  {
+    provider: "Weex",
+    lookupFunction: loookupCURPINWeeex,
+  },
   {
     provider: "Freedompop",
     lookupFunction: lookupCURPInFreedompop,
   },
-  // {
-  //   provider: "Yo Mobile",
-  //   lookupFunction: lookupCURPINYoMobile,
-  // },
+  {
+    provider: "Yo Mobile",
+    lookupFunction: lookupCURPINYoMobile,
+  },
 ];
 
 export async function POST(req: NextRequest) {
@@ -135,8 +147,7 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
 
       const promises = providers.map((p) =>
-        p
-          .lookupFunction(curp)
+        cachedLookup(p.provider, curp, p.lookupFunction)
           .then(
             (result) => {
               const results = Array.isArray(result) ? result : [result];
@@ -174,6 +185,16 @@ export async function POST(req: NextRequest) {
           })
           .then((responses) => {
             for (const response of responses) {
+              // Si la consulta falló, adjunta el portal oficial (si existe)
+              // para que el usuario consulte manualmente.
+              const r = response.result as LineResult;
+              if (
+                (r.temporaryUnavailable || r.error) &&
+                !r.portalUrl
+              ) {
+                const portal = getPortalUrl(response.provider);
+                if (portal) r.portalUrl = portal;
+              }
               const sanitized = stripCURPs(response);
               controller.enqueue(
                 encoder.encode(`${JSON.stringify(sanitized)}\n`),

@@ -1,5 +1,6 @@
 import { ProxyAgent, fetch as undiciFetch } from "undici";
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
+import { proxyFetch } from "@/lib/providers/_proxy";
 import type { LineResult } from "@/types";
 
 // AT&T bloquea (403) peticiones sin User-Agent de navegador y, desde IPs de
@@ -22,13 +23,14 @@ const BLOCKED = Symbol("blocked");
  */
 function getProxiedFetch(): typeof undiciFetch {
   const raw = process.env.ATT_PROXIES;
-  if (!raw) return undiciFetch;
+  // Sin ATT_PROXIES dedicados, usa el proxy general (Tor en prod) como fallback
+  if (!raw) return proxyFetch as unknown as typeof undiciFetch;
 
   const proxies = raw
     .split(",")
     .map((p) => p.trim())
     .filter(Boolean);
-  if (proxies.length === 0) return undiciFetch;
+  if (proxies.length === 0) return proxyFetch as unknown as typeof undiciFetch;
 
   const entry = proxies[Math.floor(Math.random() * proxies.length)];
   const url = entry.startsWith("http")

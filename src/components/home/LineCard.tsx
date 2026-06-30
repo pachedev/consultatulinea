@@ -36,11 +36,15 @@ export function LineCard({ line }: { line: DisplayLine }) {
     line.numero !== "Número oculto" &&
     state === "confirmed";
 
-  // Preferimos la URL oficial de consulta; si no, el sitio del operador.
+  // Preferimos el portal que adjunta la API (provider que falló); si no, la URL
+  // oficial de consulta; si no, el sitio del operador.
   const portalUrl =
-    getConsultaUrl(line.operadora) ?? getProviderWebsite(line.operadora);
-  // La consulta manual aplica a líneas que no pudimos confirmar.
-  const showManualConsult = state === "possible" || state === "error";
+    line.portalUrl ??
+    getConsultaUrl(line.operadora) ??
+    getProviderWebsite(line.operadora);
+  // La consulta manual aplica a líneas que no pudimos confirmar o que fallaron.
+  const showManualConsult =
+    state === "possible" || state === "error" || state === "unavailable";
 
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
@@ -104,7 +108,9 @@ export function LineCard({ line }: { line: DisplayLine }) {
           <p className="text-xs text-ink-faint">
             {state === "error"
               ? "No pudimos consultar este operador."
-              : "Resultado no confirmado."}{" "}
+              : state === "unavailable"
+                ? "Consulta automática no disponible por ahora."
+                : "Resultado no confirmado."}{" "}
             Verifica directamente:
           </p>
           {portalUrl ? (

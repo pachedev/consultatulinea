@@ -1,5 +1,5 @@
 import { createCipheriv } from "node:crypto";
-import { fetch as undiciFetch } from "undici";
+import { residentialFetch as undiciFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -51,6 +51,7 @@ async function fetchSubscriptions(encryptedCURP: string): Promise<FetchResult> {
     method: "GET",
     headers: {
       accept: "application/json",
+      "accept-encoding": "gzip, deflate, br",
       "accept-language": "en-US,en;q=0.6",
       authorization: `Basic ${auth}`,
       "content-type": "application/json",
