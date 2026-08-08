@@ -17,8 +17,17 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "Qué datos tratamos",
     body: [
-      "Para realizar una consulta, ingresas tu CURP. La consulta se ejecuta desde tu navegador hacia los portales de verificación de los operadores.",
-      "No almacenamos tu CURP, tus números telefónicos ni los resultados de la consulta en ningún servidor del proyecto.",
+      "Para realizar una consulta, ingresas tu CURP. Tu CURP viaja cifrada (TLS) a nuestro servidor, que es quien consulta los mecanismos públicos de verificación de cada operador y te devuelve el resultado en pantalla.",
+      "No almacenamos tu CURP, tus números telefónicos ni los resultados de la consulta en ninguna base de datos del proyecto, y la CURP se omite de los registros técnicos del sistema.",
+      "Para no repetir la misma consulta contra los operadores en cuestión de minutos, el resultado puede permanecer unos minutos en memoria volátil, indexado con una huella irreversible (SHA-256) de la CURP y nunca con la CURP en claro. Esa memoria se pierde al reiniciar el servicio.",
+    ],
+  },
+  {
+    title: "Cómo salen las consultas (proxies)",
+    body: [
+      "Varios operadores bloquean el tráfico que proviene de centros de datos. Para que tu consulta llegue igual que la de cualquier persona, una parte de las peticiones sale a través de servicios de proxy, incluidos proxies residenciales.",
+      "El proxy únicamente cambia la dirección IP desde la que sale la consulta hacia el operador. Tu dirección IP nunca se comparte con el operador ni con el proxy, y no se les envía ningún dato adicional tuyo.",
+      "Lo indicamos de forma explícita porque creemos que debes saber por dónde viaja tu consulta, aunque el tratamiento de tu CURP no cambia en absoluto.",
     ],
   },
   {

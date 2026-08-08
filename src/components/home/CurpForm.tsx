@@ -22,6 +22,7 @@ type Props = {
   history: string[];
   onSubmit: (e: FormEvent) => void;
   onRetry: () => void;
+  onSelectHistory: (v: string) => void;
 };
 
 export function CurpForm({
@@ -33,6 +34,7 @@ export function CurpForm({
   history,
   onSubmit,
   onRetry,
+  onSelectHistory,
 }: Props) {
   const validationError = getCurpValidationError(curp);
   const isValid = CURP_REGEX.test(curp);
@@ -161,7 +163,7 @@ export function CurpForm({
                 key={h}
                 type="button"
                 disabled={loading}
-                onClick={() => setCurp(h)}
+                onClick={() => onSelectHistory(h)}
                 className="tabular rounded-md border border-line bg-surface px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-line-strong hover:text-ink disabled:opacity-40"
               >
                 {h}

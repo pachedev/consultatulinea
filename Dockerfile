@@ -35,5 +35,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static    ./.next/static
 
 USER nextjs
 EXPOSE 3000
-ENV PORT=3000 HOSTNAME=0.0.0.0
+# getaddrinfo() corre en el thread pool de libuv, que por defecto son 4 hilos: la
+# resolución DNS se encola de 4 en 4 antes de que salga una sola petición. Con
+# una docena de operadores en paralelo eso se ve como "el operador falló".
+ENV PORT=3000 HOSTNAME=0.0.0.0 UV_THREADPOOL_SIZE=16
 CMD ["node", "server.js"]

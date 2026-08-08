@@ -1,4 +1,5 @@
 import { createCipheriv } from "node:crypto";
+import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { residentialFetch as undiciFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
@@ -49,6 +50,7 @@ async function fetchSubscriptions(encryptedCURP: string): Promise<FetchResult> {
   const auth = Buffer.from("admin:admin123").toString("base64");
   const response = await undiciFetch(url, {
     method: "GET",
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     headers: {
       accept: "application/json",
       "accept-encoding": "gzip, deflate, br",

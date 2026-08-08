@@ -1,3 +1,4 @@
+import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
@@ -23,6 +24,7 @@ export async function lookupCURPInDialo(curp: string): Promise<LineResult> {
       method: "POST",
       headers: validationHeaders,
       body: JSON.stringify(validationBody),
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     },
   );
 

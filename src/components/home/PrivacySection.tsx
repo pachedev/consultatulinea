@@ -10,8 +10,8 @@ export function PrivacySection() {
             Privacidad por diseño
           </h2>
           <p className="mt-3 max-w-md text-pretty text-ink-soft">
-            La consulta ocurre en tu navegador. El proyecto no almacena tu
-            información en ningún momento.
+            Tu CURP se usa únicamente durante la consulta y nunca se guarda. El
+            proyecto no construye ninguna base de datos con tu información.
           </p>
           <ul className="mt-6 grid gap-2.5">
             {SECURITY_BULLETS.map((bullet) => (

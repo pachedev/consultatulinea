@@ -34,10 +34,10 @@ export const WHY_CARDS: { icon: LucideIcon; title: string; body: string }[] = [
 
 export const SECURITY_BULLETS = [
   "Conexiones cifradas en tránsito (TLS/HTTPS).",
-  "Sesión destruida automáticamente.",
-  "No guardamos datos personales ni historiales.",
-  "No almacenamos CURP ni números.",
-  "Cumplimiento de privacidad.",
+  "Tu CURP no se guarda en base de datos ni en registros del sistema.",
+  "No almacenamos tus números ni los resultados de la consulta.",
+  "Las consultas salen desde nuestros servidores: tu IP nunca llega al operador.",
+  "Tu historial reciente vive solo en tu navegador.",
   "Proyecto open source y auditable.",
 ];
 
@@ -50,3 +50,10 @@ export const ARCO_RIGHTS = [
 
 export const TOTAL_PROVIDERS = 104;
 export const QUERY_TIMEOUT_MS = 15000;
+
+// Techo duro para una sola petición a un operador. Debe quedar por debajo del
+// watchdog del cliente (QUERY_TIMEOUT_MS * 2 en useLookup): un operador colgado
+// tiene que volver como una tarjeta fallida mientras el resto del stream sigue
+// llegando, en lugar de sobrevivir al abort que mata la consulta completa.
+// 12s es la convención ya usada por los providers que sí tenían timeout.
+export const PROVIDER_TIMEOUT_MS = 12_000;

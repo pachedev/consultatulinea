@@ -28,6 +28,15 @@ export function HomeView() {
     lookup.consultar(curp);
   };
 
+  // Elegir una búsqueda reciente solo cambiaba el input: los resultados de la
+  // consulta anterior seguían montados, así que parecía que ese resultado
+  // pertenecía a la CURP recién seleccionada.
+  const onSelectHistory = (value: string) => {
+    lookup.reset();
+    setSubmittedCurp("");
+    setCurp(value);
+  };
+
   const onNuevaConsulta = () => {
     lookup.reset();
     setCurp("");
@@ -46,6 +55,7 @@ export function HomeView() {
       history={history}
       onSubmit={onSubmit}
       onRetry={lookup.retry}
+      onSelectHistory={onSelectHistory}
     />
   );
 

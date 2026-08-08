@@ -5,10 +5,27 @@ import { fetch as undiciFetch, ProxyAgent, Agent } from "undici";
  * un fetch que lo usa. Singleton por nivel para reutilizar conexiones TCP/TLS.
  * `rejectUnauthorized: false` cubre APIs con certs expirados/propietarios.
  */
+// Mismo criterio que el dispatcher global de src/instrumentation.ts: varios
+// operadores cierran su socket ocioso alrededor de los 30s mientras undici lo
+// conserva hasta ~600s. Reutilizar uno ya muerto hace que la petición se cuelgue
+// hasta agotar el timeout del provider. Desalojamos a los 10s.
+const KEEP_ALIVE_MS = 10_000;
+
 function makeProxyFetch(proxyUrl: string) {
   const dispatcher = proxyUrl
-    ? new ProxyAgent({ uri: proxyUrl, connect: { rejectUnauthorized: false } })
-    : new Agent({ connect: { rejectUnauthorized: false } });
+    ? new ProxyAgent({
+        uri: proxyUrl,
+        connect: { rejectUnauthorized: false },
+        allowH2: false,
+        keepAliveTimeout: KEEP_ALIVE_MS,
+        keepAliveMaxTimeout: KEEP_ALIVE_MS,
+      })
+    : new Agent({
+        connect: { rejectUnauthorized: false },
+        allowH2: false,
+        keepAliveTimeout: KEEP_ALIVE_MS,
+        keepAliveMaxTimeout: KEEP_ALIVE_MS,
+      });
 
   return function fetchWithDispatcher(
     url: string | URL,

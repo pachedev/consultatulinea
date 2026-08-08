@@ -2,7 +2,7 @@ const STEPS = [
   {
     n: "01",
     title: "Ingresa tu CURP",
-    body: "Se queda en tu navegador. No la enviamos ni la guardamos en ningún servidor del proyecto.",
+    body: "Viaja cifrada a nuestro servidor, que la usa solo para preguntarle a los operadores. No se guarda en ninguna base de datos ni en los registros del sistema.",
   },
   {
     n: "02",

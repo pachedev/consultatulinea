@@ -1,3 +1,4 @@
+import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
@@ -12,6 +13,7 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
   // Step 1: GET session page to obtain cookies and CSRF token
   const sessionResponse = await fetch(SESSION_URL, {
     method: "GET",
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     headers: {
       Accept:
         "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -67,6 +69,7 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
   // Step 2: POST search
   const searchResponse = await fetch(SEARCH_URL, {
     method: "POST",
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     headers: {
       Accept: "application/json",
       "Accept-Language": "en-US,en;q=0.5",
@@ -107,7 +110,34 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
     };
   }
 
-  if (Array.isArray(data.data) && data.data.length === 0) {
+  // Mobig ha cambiado el contrato de search-msisdns al menos dos veces: a veces
+  // `data.data` es el array directo, a veces es `{ last_digits, msisdns }` con
+  // el array adentro. Verificado 2026-08-08: hoy responde la forma objeto.
+  // Leer solo una de las dos hacía que el check de "sin líneas" nunca matchee y
+  // TODA consulta cayera al return de abajo como registrada.
+  const msisdns = Array.isArray(data.data)
+    ? (data.data as unknown[])
+    : Array.isArray(data.data?.msisdns)
+      ? (data.data.msisdns as unknown[])
+      : null;
+
+  // Forma desconocida => no asumimos registro. Un falso positivo aquí le dice al
+  // usuario que tiene una línea a su nombre que no reconoce; perder cobertura
+  // temporalmente es mucho menos dañino. temporaryUnavailable además evita que
+  // el resultado se cachee y hace que la UI ofrezca el portal oficial.
+  if (msisdns === null) {
+    console.error(
+      "[mobig] forma de respuesta no reconocida:",
+      JSON.stringify(stripCURPs(data), null, 2),
+    );
+    return {
+      company: "Mobig",
+      lines: [],
+      temporaryUnavailable: true,
+    };
+  }
+
+  if (msisdns.length === 0) {
     return {
       company: "Mobig",
       lines: [],

@@ -23,32 +23,39 @@ export async function lookupCURPInMegamovil(curp: string): Promise<LineResult> {
     // descargarlo entero → ahorra ancho de banda del proxy residencial.
     await sessionRes.body?.cancel().catch(() => {});
 
-    const validationRes = await proxyFetch(
-      `${BASE}/validaCURP?curp=${curp}`,
-      {
-        headers: { ...BROWSER_HEADERS, Cookie: cookies },
-        signal: signal12s().signal,
-      },
-    );
+    const validationRes = await proxyFetch(`${BASE}/validaCURP?curp=${curp}`, {
+      headers: { ...BROWSER_HEADERS, Cookie: cookies },
+      signal: signal12s().signal,
+    });
 
     if (!validationRes.ok) {
       const body = await validationRes.text().catch(() => "(unreadable)");
-      console.error(`[megamovil] validation ${validationRes.status} ${validationRes.statusText} — ${body}`);
+      console.error(
+        `[megamovil] validation ${validationRes.status} ${validationRes.statusText} — ${body}`,
+      );
       return {
         company: "Megamovil",
         lines: [],
-        temporaryUnavailable: validationRes.status === 403 || validationRes.status === 429,
-        error: validationRes.status !== 403 && validationRes.status !== 429
-          ? "Failed to validate CURP with Megamovil"
-          : undefined,
+        temporaryUnavailable:
+          validationRes.status === 403 || validationRes.status === 429,
+        error:
+          validationRes.status !== 403 && validationRes.status !== 429
+            ? "Failed to validate CURP with Megamovil"
+            : undefined,
       };
     }
 
-    const data = await validationRes.json() as { message?: string; status?: string } | null;
+    const data = (await validationRes.json()) as {
+      message?: string;
+      status?: string;
+      code?: string;
+    } | null;
 
     if (
-      data?.message === "La CURP ingresada no cuenta con líneas Mega móvil vinculadas." ||
-      data?.status === "ERROR"
+      data?.message ===
+        "La CURP ingresada no cuenta con líneas Mega móvil vinculadas." ||
+      data?.status === "ERROR" ||
+      data?.code === "0"
     ) {
       return { company: "Megamovil", lines: [], isRegistered: false };
     }
@@ -57,13 +64,46 @@ export async function lookupCURPInMegamovil(curp: string): Promise<LineResult> {
       headers: { ...BROWSER_HEADERS, Cookie: cookies },
       signal: signal12s().signal,
     });
+
+    // Sin list.jsp no hay forma de confirmar nada: validaCURP por sí solo no
+    // alcanza (ver comentario abajo), así que reportamos indisponible en vez de
+    // adivinar.
+    if (!listRes.ok) {
+      await listRes.body?.cancel().catch(() => {});
+      console.error(
+        `[megamovil] list.jsp ${listRes.status} ${listRes.statusText}`,
+      );
+      return { company: "Megamovil", lines: [], temporaryUnavailable: true };
+    }
+
     const html = await listRes.text().catch(() => "");
     const lines = html.match(/(\*{6}\d{4})/g) ?? [];
 
-    console.log("[megamovil] registered:", JSON.stringify(stripCURPs(data), null, 2));
-    return { company: "Megamovil", lines, isRegistered: true, rawApiResponse: data };
+    // validaCURP responde status:"OK" / code:"1" para prácticamente cualquier
+    // CURP con formato válido: no significa "tiene líneas", significa "continúa
+    // al siguiente paso del portal". Verificado 2026-08-08 con una CURP
+    // sintética → OK/code 1 y list.jsp sin ninguna línea. Devolver
+    // isRegistered:true ahí producía una tarjeta "Registrada · Número oculto"
+    // falsa en cada consulta. Solo confirmamos con líneas reales de list.jsp.
+    if (lines.length === 0) {
+      return { company: "Megamovil", lines: [], isRegistered: false };
+    }
+
+    console.log(
+      "[megamovil] registered:",
+      JSON.stringify(stripCURPs(data), null, 2),
+    );
+    return {
+      company: "Megamovil",
+      lines,
+      isRegistered: true,
+      rawApiResponse: data,
+    };
   } catch (err) {
-    console.error("[megamovil]", (err as Error)?.name === "AbortError" ? "timeout" : err);
+    console.error(
+      "[megamovil]",
+      (err as Error)?.name === "AbortError" ? "timeout" : err,
+    );
     return { company: "Megamovil", lines: [], temporaryUnavailable: true };
   }
 }
