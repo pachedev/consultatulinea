@@ -10,6 +10,8 @@ import { SITE } from "@/lib/data/site";
 const NAV_LINKS = [
   { href: "/#seguridad", label: "Seguridad" },
   { href: "/#arco", label: "Derechos ARCO" },
+  // Página propia, no un ancla del home como las anteriores.
+  { href: "/operadores", label: "Operadores" },
 ];
 
 export function Navbar() {
