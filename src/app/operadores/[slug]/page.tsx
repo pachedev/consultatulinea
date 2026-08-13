@@ -1,10 +1,19 @@
-import { AlertTriangle, ArrowLeft, ExternalLink, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ExternalLink,
+  ShieldCheck,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { JsonLd } from "@/components/seo/JsonLd";
 import { StatusChip } from "@/components/operators/StatusChip";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { fetchStatus } from "@/lib/api/status";
+import {
+  getOperatorProfile,
+  type OperatorProfile,
+} from "@/lib/data/operatorProfiles";
 import {
   getOperatorBySlug,
   getOperatorSlugs,
@@ -12,7 +21,9 @@ import {
 } from "@/lib/operatorPages";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// Con `force-dynamic` el generateStaticParams de abajo no servía de nada y las
+// 108 fichas se rendereaban una por una en cada rastreo.
+export const revalidate = 60;
 
 type Params = { slug: string };
 
@@ -28,11 +39,20 @@ export async function generateMetadata({
   const { slug } = await params;
   const operator = getOperatorBySlug(slug);
   if (!operator) return { title: "Operador no encontrado" };
+  const profile = getOperatorProfile(slug);
 
   return {
     title: `${operator.name} — consulta de líneas`,
-    description: `Cómo consultar las líneas telefónicas registradas con ${operator.name} en México. Estado de la integración, portal oficial de vinculación y guía paso a paso.`,
+    description:
+      profile?.intro ??
+      `Cómo consultar las líneas telefónicas registradas con ${operator.name} en México. Estado de la integración, portal oficial de vinculación y guía paso a paso.`,
     alternates: { canonical: `/operadores/${operator.slug}` },
+    // Sin perfil propio la ficha es el mismo molde que las otras 100+: se sirve
+    // para el usuario pero fuera del índice, y `follow` deja que la autoridad
+    // siga fluyendo al directorio.
+    robots: profile
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: `${operator.name} — ConsultaTuLínea`,
       description: `Verifica qué líneas tienes registradas con ${operator.name} en México usando tu CURP.`,
@@ -81,6 +101,32 @@ function makeOrganizationJsonLd(operator: OperatorView) {
   return obj;
 }
 
+function makeFaqJsonLd(profile: OperatorProfile) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: profile.faq.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+}
+
+function makeHowToJsonLd(operator: OperatorView, profile: OperatorProfile) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `Cómo consultar las líneas registradas con ${operator.name}`,
+    description: profile.intro,
+    step: profile.steps.map((text, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      text,
+    })),
+  };
+}
+
 function guidance(operator: OperatorView): string {
   if (operator.status === "supported") {
     return "Puedes consultar las líneas de este operador directamente desde ConsultaTuLínea ingresando tu CURP en la página principal.";
@@ -94,7 +140,10 @@ function guidance(operator: OperatorView): string {
   return "Aún no integramos la consulta automática de este operador. Por ahora, usa su portal oficial.";
 }
 
-function findOverride(overrides: { operator_name: string; state: string; note: string | null }[], operatorName: string) {
+function findOverride(
+  overrides: { operator_name: string; state: string; note: string | null }[],
+  operatorName: string,
+) {
   const n = operatorName.toLowerCase();
   return overrides.find((o) => {
     const k = o.operator_name.toLowerCase();
@@ -111,6 +160,7 @@ export default async function OperatorPage({
   const operator = getOperatorBySlug(slug);
   if (!operator) notFound();
 
+  const profile = getOperatorProfile(slug);
   const status = await fetchStatus();
   const override = findOverride(status.operators, operator.name);
   const isDown = override && override.state !== "available";
@@ -119,6 +169,8 @@ export default async function OperatorPage({
     <main className="flex flex-1 flex-col">
       <JsonLd data={makeBreadcrumbJsonLd(operator)} />
       <JsonLd data={makeOrganizationJsonLd(operator)} />
+      {profile ? <JsonLd data={makeHowToJsonLd(operator, profile)} /> : null}
+      {profile?.faq.length ? <JsonLd data={makeFaqJsonLd(profile)} /> : null}
 
       <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
         <Link
@@ -141,7 +193,15 @@ export default async function OperatorPage({
                 {override.state === "paused" ? "Pausado" : "No disponible"}
               </span>
             ) : null}
+            {profile?.network ? (
+              <span className="inline-flex items-center rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-xs text-ink-soft">
+                {profile.network}
+              </span>
+            ) : null}
           </div>
+          {profile ? (
+            <p className="mt-5 text-pretty text-ink-soft">{profile.intro}</p>
+          ) : null}
         </header>
 
         {isDown ? (
@@ -165,6 +225,19 @@ export default async function OperatorPage({
             Cómo consultar
           </h2>
           <p className="mt-2 text-pretty text-ink">{guidance(operator)}</p>
+
+          {profile ? (
+            <ol className="mt-5 space-y-2.5 border-l border-line pl-5">
+              {profile.steps.map((step, i) => (
+                <li key={step} className="text-sm text-ink-soft">
+                  <span className="tabular mr-2 font-medium text-ink-faint">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : null}
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             {operator.status === "supported" && !isDown ? (
@@ -210,6 +283,39 @@ export default async function OperatorPage({
             <span className="font-medium text-ink">Nota: </span>
             {operator.reason}
           </p>
+        ) : null}
+
+        {profile?.notes?.length ? (
+          <ul className="mt-4 space-y-3">
+            {profile.notes.map((note) => (
+              <li
+                key={note}
+                className="rounded-lg border border-line bg-surface-2 p-4 text-sm text-ink-soft"
+              >
+                {note}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {profile?.faq.length ? (
+          <section className="mt-10">
+            <h2 className="font-display text-xl font-bold tracking-tight text-ink">
+              Preguntas sobre {operator.name}
+            </h2>
+            <div className="mt-4 divide-y divide-line border-y border-line">
+              {profile.faq.map((item) => (
+                <details key={item.q} className="group py-4">
+                  <summary className="cursor-pointer list-none font-medium text-ink">
+                    {item.q}
+                  </summary>
+                  <p className="mt-3 text-pretty text-sm text-ink-soft">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         <p className="mt-8 text-sm text-ink-faint">

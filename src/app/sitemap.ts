@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getOperatorSlugs } from "@/lib/operatorPages";
+import { getIndexableOperatorSlugs } from "@/lib/data/operatorProfiles";
 
 const BASE = "https://consultatulinea.mx";
 
@@ -27,7 +27,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const operatorRoutes: MetadataRoute.Sitemap = getOperatorSlugs().map(
+  // Solo las fichas con contenido propio. Publicar las 108 metía al índice un
+  // centenar de páginas casi idénticas, que es lo que abarata el dominio
+  // entero; las demás se sirven con `noindex, follow`.
+  const operatorRoutes: MetadataRoute.Sitemap = getIndexableOperatorSlugs().map(
     (slug) => ({
       url: `${BASE}/operadores/${slug}`,
       lastModified: now,

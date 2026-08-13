@@ -10,20 +10,12 @@ import { PrivacySection } from "@/components/home/PrivacySection";
 import { ResultsPanel } from "@/components/home/ResultsPanel";
 import { UsageCounter } from "@/components/home/UsageCounter";
 import { CURP_REGEX } from "@/lib/curp";
-import { TOTAL_PROVIDERS } from "@/lib/data/content";
+import { SUPPORTED_PROVIDERS, TOTAL_PROVIDERS } from "@/lib/data/content";
 import { useCurpHistory } from "@/lib/hooks/useCurpHistory";
 import { useLookup } from "@/lib/hooks/useLookup";
 import { cn } from "@/lib/utils";
 
-type Props = {
-  /**
-   * Consultas acumuladas según el API. `null` cuando el backend no respondió:
-   * en ese caso no se muestra el contador y el home sigue igual de funcional.
-   */
-  totalLookups: number | null;
-};
-
-export function HomeView({ totalLookups }: Props) {
+export function HomeView() {
   const [curp, setCurp] = useState("");
   const [submittedCurp, setSubmittedCurp] = useState("");
   const { history, saveToHistory } = useCurpHistory();
@@ -86,14 +78,14 @@ export function HomeView({ totalLookups }: Props) {
             </h1>
             {!hasResults ? (
               <p className="mt-4 max-w-md text-pretty text-ink-soft">
-                Ingresa tu CURP y escanea en un solo lugar los{" "}
-                <span className="tabular text-ink">{TOTAL_PROVIDERS}</span>{" "}
-                operadores y marcas que registran líneas móviles en México.
+                Ingresa tu CURP y consulta en un solo lugar{" "}
+                <span className="tabular text-ink">{SUPPORTED_PROVIDERS}</span>{" "}
+                operadores y marcas de las{" "}
+                <span className="tabular text-ink">{TOTAL_PROVIDERS}</span> que
+                registran líneas móviles en México.
               </p>
             ) : null}
-            {!hasResults && totalLookups !== null && totalLookups > 0 ? (
-              <UsageCounter totalLookups={totalLookups} />
-            ) : null}
+            {!hasResults ? <UsageCounter /> : null}
           </header>
 
           {hasResults ? (

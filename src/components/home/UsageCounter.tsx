@@ -40,18 +40,37 @@ function useCountUp(target: number): number {
   return value;
 }
 
-type Props = {
-  /** Consultas a operadores acumuladas (dato real del API). */
-  totalLookups: number;
-};
-
 /**
- * Contador de consultas del home. Solo se monta si el API devolvió datos: la
- * decisión de ocultarlo vive en el componente padre, aquí asumimos un número
- * válido. Nunca muestra un valor inventado ni un placeholder.
+ * Contador de consultas del home.
+ *
+ * Pide el número desde el cliente en vez de recibirlo por props: el home se
+ * prerenderiza durante el build (donde el backend no existe), así que un dato
+ * resuelto en el servidor se quedaría vacío u obsoleto en el HTML cacheado.
+ *
+ * Mientras no haya dato no se renderiza nada: nunca un cero, un esqueleto ni un
+ * valor inventado.
  */
-export function UsageCounter({ totalLookups }: Props) {
-  const value = useCountUp(totalLookups);
+export function UsageCounter() {
+  const [totalLookups, setTotalLookups] = useState<number | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/stats", { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { total_lookups?: number } | null) => {
+        if (typeof data?.total_lookups === "number" && data.total_lookups > 0) {
+          setTotalLookups(data.total_lookups);
+        }
+      })
+      .catch(() => {
+        // Backend caído: el contador simplemente no aparece.
+      });
+    return () => controller.abort();
+  }, []);
+
+  const value = useCountUp(totalLookups ?? 0);
+
+  if (totalLookups === null) return null;
 
   return (
     <p className="tabular mt-3 text-xs tracking-[0.18em] text-ink-faint uppercase">

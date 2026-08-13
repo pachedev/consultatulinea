@@ -7,19 +7,30 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
-import { OPERATORS } from "@/lib/data/operators";
+import { getOperatorDisplayStatus, OPERATORS } from "@/lib/data/operators";
+
+// Se deriva del catálogo en vez de quemarse: el 104 venía heredado de upstream
+// y quedó viejo cuando la lista creció, así que el home decía 104 mientras
+// /operadores (que ya usaba operators.length) decía otra cosa.
+export const TOTAL_PROVIDERS = OPERATORS.length;
+
+// Marcas con consulta automática desde aquí. El resto solo tiene ficha con su
+// portal oficial, así que el copy no debe prometer que escaneamos las 108.
+export const SUPPORTED_PROVIDERS = OPERATORS.filter(
+  (o) => getOperatorDisplayStatus(o) === "supported",
+).length;
 
 export const KNOWN_PROVIDERS: { name: string; icon: LucideIcon }[] = [
   { name: "Telcel", icon: Signal },
   { name: "AT&T", icon: Wifi },
-  { name: "+80 MVNOs (Red Altan)", icon: Building2 },
+  { name: `+${TOTAL_PROVIDERS - 3} MVNOs (Red Altán)`, icon: Building2 },
 ];
 
 export const WHY_CARDS: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Zap,
     title: "Un solo lugar",
-    body: "Antes tenías que buscar en más de 100 sitios web diferentes. Hoy solo necesitas ingresar tu CURP aquí.",
+    body: `Antes tenías que buscar en ${TOTAL_PROVIDERS} sitios web diferentes. Hoy solo necesitas ingresar tu CURP aquí.`,
   },
   {
     icon: Scale,
@@ -48,11 +59,6 @@ export const ARCO_RIGHTS = [
   { t: "Cancelación", d: "Elimina tus datos" },
   { t: "Oposición", d: "Niégate al uso" },
 ];
-
-// Se deriva del catálogo en vez de quemarse: el 104 venía heredado de upstream
-// y quedó viejo cuando la lista creció a 108, así que el home decía 104 mientras
-// /operadores (que ya usaba operators.length) decía 108.
-export const TOTAL_PROVIDERS = OPERATORS.length;
 
 // Proveedores que consulta /api/lookup. NO es lo mismo que TOTAL_PROVIDERS: una
 // sola petición puede cubrir decenas de marcas (Red Altan cubre 65). Sirve para

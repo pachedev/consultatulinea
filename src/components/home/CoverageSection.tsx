@@ -1,11 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { TOTAL_PROVIDERS } from "@/lib/data/content";
-import { getOperatorDisplayStatus, OPERATORS } from "@/lib/data/operators";
-
-const supported = OPERATORS.filter(
-  (o) => getOperatorDisplayStatus(o) === "supported",
-).length;
+import { SUPPORTED_PROVIDERS, TOTAL_PROVIDERS } from "@/lib/data/content";
 
 export function CoverageSection() {
   return (
@@ -17,8 +12,11 @@ export function CoverageSection() {
               Cobertura
             </h2>
             <p className="mt-3 text-pretty text-ink-soft">
-              Telcel, AT&amp;T y más de 80 operadores móviles virtuales sobre la
-              Red Altán. Consulta el estado de cada portal en el directorio.
+              Telcel, AT&amp;T y {TOTAL_PROVIDERS - 2} operadores móviles
+              virtuales, la mayoría sobre la Red Altán.{" "}
+              <span className="text-ink">{SUPPORTED_PROVIDERS}</span> se
+              consultan directo desde aquí; del resto te llevamos a su portal
+              oficial. Consulta el estado de cada uno en el directorio.
             </p>
             <Link
               href="/operadores"
@@ -31,7 +29,10 @@ export function CoverageSection() {
 
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line">
             <Stat value={String(TOTAL_PROVIDERS)} label="Marcas cubiertas" />
-            <Stat value={`${supported}+`} label="Con consulta directa" />
+            <Stat
+              value={String(SUPPORTED_PROVIDERS)}
+              label="Con consulta directa"
+            />
           </dl>
         </div>
       </div>

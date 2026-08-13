@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/seo/JsonLd";
+
 const STEPS = [
   {
     n: "01",
@@ -16,9 +18,26 @@ const STEPS = [
   },
 ];
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Cómo consultar qué líneas telefónicas están registradas a tu nombre en México",
+  description:
+    "Consulta con tu CURP las líneas móviles registradas a tu nombre ante el Registro Nacional de Usuarios de Telefonía Móvil.",
+  totalTime: "PT1M",
+  supply: [{ "@type": "HowToSupply", name: "CURP (18 caracteres)" }],
+  step: STEPS.map((step, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: step.title,
+    text: step.body,
+  })),
+};
+
 export function HowItWorks() {
   return (
     <section className="border-b border-line">
+      <JsonLd data={howToJsonLd} />
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           Cómo funciona

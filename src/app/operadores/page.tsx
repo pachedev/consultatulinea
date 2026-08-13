@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { JsonLd } from "@/components/seo/JsonLd";
 import { OperatorsDirectory } from "@/components/operators/OperatorsDirectory";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { fetchStatus } from "@/lib/api/status";
+import { TOTAL_PROVIDERS } from "@/lib/data/content";
 import { getAllOperatorViews } from "@/lib/operatorPages";
 
 const BASE = "https://consultatulinea.mx";
 
-export const dynamic = "force-dynamic";
+// El estado de operadores se revalida cada minuto en vez de rerenderizar en
+// cada visita: así el directorio se sirve prerenderizado (crawl barato) y el
+// chip de incidencias sigue estando al día.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Operadores y marcas móviles en México",
-  description:
-    "Directorio completo de operadores y OMVs que registran líneas móviles en México. Estado de integración, portal oficial de vinculación y red de cada operador: Telcel, AT&T, Movistar, Bait, Oxxo Cel y más de 80 marcas.",
+  description: `Directorio de los ${TOTAL_PROVIDERS} operadores y OMVs que registran líneas móviles en México. Estado de integración, portal oficial de vinculación y red de cada uno: Telcel, AT&T, Movistar, Bait, Oxxo Cel y más.`,
   alternates: { canonical: "/operadores" },
   keywords: [
     "operadores México telefonía móvil",
@@ -22,8 +25,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Operadores y marcas móviles en México — ConsultaTuLínea",
-    description:
-      "Directorio de más de 80 operadores y marcas de telefonía móvil en México con estado de consulta y portal oficial.",
+    description: `Directorio de ${TOTAL_PROVIDERS} operadores y marcas de telefonía móvil en México con estado de consulta y portal oficial.`,
   },
 };
 
@@ -63,7 +65,10 @@ export default async function OperadoresPage() {
           </p>
         </header>
 
-        <OperatorsDirectory operators={operators} statusOverrides={status.operators} />
+        <OperatorsDirectory
+          operators={operators}
+          statusOverrides={status.operators}
+        />
       </div>
     </main>
   );
