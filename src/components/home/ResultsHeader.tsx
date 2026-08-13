@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, Loader2, RotateCcw, UserCheck } from "lucide-react";
-import { TOTAL_PROVIDERS } from "@/lib/data/content";
+import { ACTIVE_LOOKUP_PROVIDERS } from "@/lib/data/content";
 import { getRiskLevel } from "@/lib/lookup";
 import { cn } from "@/lib/utils";
 import type { DisplayLine } from "@/types";
@@ -10,7 +10,7 @@ type Props = {
   results: DisplayLine[];
   curp: string;
   loading: boolean;
-  scannedCount: number;
+  providersDone: number;
   queryTime: Date | null;
   onNuevaConsulta: () => void;
   onExportCsv: () => void;
@@ -23,7 +23,7 @@ export function ResultsHeader({
   results,
   curp,
   loading,
-  scannedCount,
+  providersDone,
   queryTime,
   onNuevaConsulta,
   onExportCsv,
@@ -35,7 +35,10 @@ export function ResultsHeader({
     (l) => !l.isNotFound && !l.isError && !l.isUnavailable,
   ).length;
   const risk = getRiskLevel(results);
-  const pct = Math.min(100, (scannedCount / TOTAL_PROVIDERS) * 100);
+  // El avance se mide contra los proveedores que realmente se consultan, no
+  // contra las 104 marcas: una sola petición (Red Altan) cubre 65 marcas, así
+  // que dividir entre el total dejaba la barra clavada en ~19% al terminar.
+  const pct = Math.min(100, (providersDone / ACTIVE_LOOKUP_PROVIDERS) * 100);
 
   return (
     <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
@@ -91,7 +94,8 @@ export function ResultsHeader({
           <div className="mb-1.5 flex items-center justify-between text-xs text-ink-soft">
             <span>Escaneando operadores…</span>
             <span className="tabular">
-              {scannedCount}/{TOTAL_PROVIDERS}
+              {providersDone}/{ACTIVE_LOOKUP_PROVIDERS} proveedores ·{" "}
+              {results.length} marcas
             </span>
           </div>
           <div className="scan-sweep relative h-1 overflow-hidden rounded-full bg-line">

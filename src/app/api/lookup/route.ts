@@ -14,7 +14,6 @@ import {
   lookupCURPInMegamovil,
   lookupCURPInMirlo,
   lookupCURPInTelcel,
-  lookupCURPINYoMobile,
   loookupCURPInVirginMobile,
   loookupCURPINWeeex,
 } from "@/lib/providers";
@@ -127,10 +126,17 @@ const providers: Array<{
     provider: "Freedompop",
     lookupFunction: lookupCURPInFreedompop,
   },
-  {
-    provider: "Yo Mobile",
-    lookupFunction: lookupCURPINYoMobile,
-  },
+  // {
+  //   provider: "Yo Mobile",
+  //   lookupFunction: lookupCURPINYoMobile,
+  //   // Deshabilitado: su API (play.prod.yomobile.xyz) está detrás de un Managed
+  //   // Challenge de Cloudflare — responde 403 con `cf-mitigated: challenge`
+  //   // incluso con headers de navegador y HTTP/2. Es fingerprint TLS + JS, no
+  //   // reputación de IP, así que ningún proxy lo evita. Verificado 2026-08-13.
+  //   // Mantenerlo activo solo producía una tarjeta "Error al consultar" que
+  //   // además duplicaba a la operadora: operators.ts ya la marca como "paused",
+  //   // así que aparece en la sección de consulta manual con su portal correcto.
+  // },
 ];
 
 export async function POST(req: NextRequest) {

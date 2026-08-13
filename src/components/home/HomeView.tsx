@@ -8,13 +8,22 @@ import { FaqSection } from "@/components/home/FaqSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { PrivacySection } from "@/components/home/PrivacySection";
 import { ResultsPanel } from "@/components/home/ResultsPanel";
+import { UsageCounter } from "@/components/home/UsageCounter";
 import { CURP_REGEX } from "@/lib/curp";
 import { TOTAL_PROVIDERS } from "@/lib/data/content";
 import { useCurpHistory } from "@/lib/hooks/useCurpHistory";
 import { useLookup } from "@/lib/hooks/useLookup";
 import { cn } from "@/lib/utils";
 
-export function HomeView() {
+type Props = {
+  /**
+   * Consultas acumuladas según el API. `null` cuando el backend no respondió:
+   * en ese caso no se muestra el contador y el home sigue igual de funcional.
+   */
+  totalLookups: number | null;
+};
+
+export function HomeView({ totalLookups }: Props) {
   const [curp, setCurp] = useState("");
   const [submittedCurp, setSubmittedCurp] = useState("");
   const { history, saveToHistory } = useCurpHistory();
@@ -82,6 +91,9 @@ export function HomeView() {
                 operadores y marcas que registran líneas móviles en México.
               </p>
             ) : null}
+            {!hasResults && totalLookups !== null && totalLookups > 0 ? (
+              <UsageCounter totalLookups={totalLookups} />
+            ) : null}
           </header>
 
           {hasResults ? (
@@ -99,6 +111,7 @@ export function HomeView() {
                   curp={submittedCurp}
                   loading={lookup.loading}
                   scannedCount={lookup.scannedCount}
+                  providersDone={lookup.providersDone}
                   queryTime={lookup.queryTime}
                   onNuevaConsulta={onNuevaConsulta}
                 />

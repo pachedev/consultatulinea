@@ -10,8 +10,11 @@ export const PROVIDER_PORTALS: Record<string, string> = {
   Telcel: "https://registro.telcel.com/vinculatulinea/",
   "Mega Móvil": "https://consultavinculacion.megamovil.mx/",
   Freedompop: "https://vinculatulinea.com/",
-  Weex: "https://miespacio.weex.mx/",
-  "Yo Mobile": "https://yomobile.mx/",
+  // URLs verificadas contra el portal del CRT el 2026-08-13. Las anteriores
+  // (miespacio.weex.mx, yomobile.mx) ya no tienen consulta de líneas.
+  Weex: "https://weex.mx/consultalineas.html",
+  "Yo Mobile": "https://mx.yomobile.com/consulta",
+  "Virgin Mobile": "https://mi.virginmobile.mx/v1/consultatulinea",
 };
 
 export function getPortalUrl(provider: string): string | undefined {

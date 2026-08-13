@@ -12,6 +12,10 @@ export function useLookup(onConsult?: (curp: string) => void) {
   const [results, setResults] = useState<DisplayLine[] | null>(null);
   const [queryTime, setQueryTime] = useState<Date | null>(null);
   const [scannedCount, setScannedCount] = useState(0);
+  // Proveedores distintos que ya respondieron. `scannedCount` cuenta respuestas
+  // del stream, y un proveedor puede emitir varias (Freedompop manda una por
+  // marca), así que no sirve para medir avance.
+  const [providersDone, setProvidersDone] = useState(0);
   const [liveMessage, setLiveMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -28,6 +32,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
     setLoading(true);
     setQueryTime(null);
     setScannedCount(0);
+    setProvidersDone(0);
     setLiveMessage("Iniciando consulta...");
 
     const controller = new AbortController();
@@ -74,6 +79,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
       let buffer = "";
 
       const accumulated: ProviderResponse[] = [];
+      const seenProviders = new Set<string>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -93,13 +99,15 @@ export function useLookup(onConsult?: (curp: string) => void) {
           try {
             const parsed = JSON.parse(line) as ProviderResponse;
             accumulated.push(parsed);
+            if (parsed.provider) seenProviders.add(parsed.provider);
           } catch (e) {
             console.error("Error parsing NDJSON chunk", line, e);
           }
         }
 
         setScannedCount(accumulated.length);
-        setLiveMessage(`Escaneando proveedor ${accumulated.length}...`);
+        setProvidersDone(seenProviders.size);
+        setLiveMessage(`Escaneando proveedor ${seenProviders.size}...`);
         setResults(transformApiResponse([...accumulated]));
       }
 
@@ -115,7 +123,13 @@ export function useLookup(onConsult?: (curp: string) => void) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // scanned_count = respuestas de proveedor (peticiones reales).
+          // operators_covered = marcas que esas peticiones cubren: Red Altan
+          // resuelve 65 marcas en una sola llamada, así que sin este campo el
+          // panel de admin decía "20 operadores" para una consulta que revisó
+          // más de 80.
           scanned_count: accumulated.length,
+          operators_covered: transformApiResponse([...accumulated]).length,
           confirmed_count: accumulated.filter(
             (r) => (r.result.lines?.length ?? 0) > 0,
           ).length,
@@ -165,6 +179,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
     setError(null);
     setTimedOut(false);
     setScannedCount(0);
+    setProvidersDone(0);
     setLiveMessage("");
     setLoading(false);
   };
@@ -176,6 +191,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
     results,
     queryTime,
     scannedCount,
+    providersDone,
     liveMessage,
     consultar,
     retry,

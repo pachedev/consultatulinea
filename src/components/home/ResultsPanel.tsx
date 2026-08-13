@@ -19,6 +19,7 @@ type Props = {
   curp: string;
   loading: boolean;
   scannedCount: number;
+  providersDone: number;
   queryTime: Date | null;
   onNuevaConsulta: () => void;
 };
@@ -28,6 +29,7 @@ export function ResultsPanel({
   curp,
   loading,
   scannedCount,
+  providersDone,
   queryTime,
   onNuevaConsulta,
 }: Props) {
@@ -138,7 +140,7 @@ export function ResultsPanel({
         results={results}
         curp={curp}
         loading={loading}
-        scannedCount={scannedCount}
+        providersDone={providersDone}
         queryTime={queryTime}
         onNuevaConsulta={onNuevaConsulta}
         onExportCsv={() => handleExport("csv")}

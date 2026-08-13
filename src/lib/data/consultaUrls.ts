@@ -104,7 +104,7 @@ export const CONSULTA_URLS: Record<string, string> = {
   Ultracel: "https://rnu.altanredes.com/consulta",
   Vasanta: "https://rnu.altanredes.com/consulta",
   "Viral Cel": "https://www.viralcel.com/mi-linea",
-  "Virgin Mobile": "https://virginmobile.mx/v1/consultatulinea",
+  "Virgin Mobile": "https://mi.virginmobile.mx/v1/consultatulinea",
   VivaMX: "https://rnu.altanredes.com/consulta",
   Weex: "https://weex.mx/consultalineas.html",
   Wiicel: "https://wiicel.com",

@@ -96,11 +96,7 @@ export const OPERATORS: OperatorEntry[] = [
   { name: "Link Móvil", status: "supported" },
   { name: "Kolors Mobile", status: "supported" },
   { name: "Maifon", status: "supported" },
-  {
-    name: "Mega Móvil",
-    status: "paused",
-    reason: "WAF bloquea peticiones desde servidor.",
-  },
+  { name: "Mega Móvil", status: "supported" },
   { name: "México Móvil", status: "supported" },
   { name: "Mexfon", status: "supported" },
   {
@@ -197,18 +193,15 @@ export const OPERATORS: OperatorEntry[] = [
   { name: "Viral Cel", status: "paused", reason: "Requiere inicio de sesión." },
   { name: "Virgin Mobile", status: "supported" },
   { name: "VivaMX", status: "supported" },
-  {
-    name: "Weex",
-    status: "paused",
-    reason: "Múltiples fallos en su servidor.",
-  },
+  { name: "Weex", status: "supported" },
   { name: "Wiicel", status: "supported" },
   { name: "Wiki Katat", status: "supported" },
   { name: "Wimotelecom", status: "supported" },
   {
     name: "Yo mobile",
     status: "paused",
-    reason: "Cloudflare JS challenge bloquea peticiones desde servidor.",
+    reason:
+      "Cloudflare Managed Challenge bloquea peticiones desde servidor. Consulta en mx.yomobile.com/consulta.",
   },
   { name: "Yobi Telecom", status: "supported" },
   {

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { HomeView } from "@/components/home/HomeView";
+import { fetchUsageStats } from "@/lib/api/stats";
+
+// El contador de consultas se revalida cada minuto: no necesita ser exacto al
+// segundo y así el home se sigue sirviendo aunque el backend tarde o no esté.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "ConsultaTuLínea — Líneas registradas a tu nombre en México",
@@ -24,6 +29,10 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function HomePage() {
-  return <HomeView />;
+export default async function HomePage() {
+  // null = el API no respondió → HomeView no monta el contador y el resto del
+  // home funciona igual.
+  const stats = await fetchUsageStats();
+
+  return <HomeView totalLookups={stats?.total_lookups ?? null} />;
 }
