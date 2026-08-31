@@ -4,7 +4,6 @@ export const maxDuration = 120;
 import type { NextRequest } from "next/server";
 import {
   lookupCURPINMobig,
-  lookupCURPINNextorMovil,
   lookupCURPInABIB,
   lookupCURPInAltanMVNO,
   lookupCURPInBeneleit,
@@ -14,10 +13,8 @@ import {
   lookupCURPInLogisticaACN,
   lookupCURPInMegamovil,
   lookupCURPInMirlo,
-  lookupCURPInSorcel,
   lookupCURPInTelcel,
   loookupCURPINWeeex,
-  loookupCURPInTalentoNetMVNO,
   loookupCURPInVirginMobile,
 } from "@/lib/providers";
 import { cachedLookup } from "@/lib/providers/_cache";
@@ -102,18 +99,37 @@ const providers: Array<{
     provider: "MoBig",
     lookupFunction: lookupCURPINMobig,
   },
-  {
-    provider: "Nextor Movil",
-    lookupFunction: lookupCURPINNextorMovil,
-  },
-  {
-    provider: "Sorcel",
-    lookupFunction: lookupCURPInSorcel,
-  },
-  {
-    provider: "TalentoNet (Newww, Red Aguila, Link Móvil)",
-    lookupFunction: loookupCURPInTalentoNetMVNO,
-  },
+  // {
+  //   provider: "Nextor Movil",
+  //   lookupFunction: lookupCURPINNextorMovil,
+  //   // Deshabilitado: la conexión falla por el proxy residencial (timeout).
+  //   // Medido el 2026-08-31 contra el endpoint real: responde 200 desde una
+  //   // IP doméstica mexicana, pero por el proxy contratado falla siempre. La
+  //   // zona es ISP, no residencial, y sus rangos (WS Telecom Inc, AS209372 y
+  //   // AS213541) están fichados. Forzar salida mexicana con -country-mx da
+  //   // una IP MX legítima y tampoco pasa.
+  // },
+  // {
+  //   provider: "Sorcel",
+  //   lookupFunction: lookupCURPInSorcel,
+  //   // Deshabilitado: Cloudflare devuelve 403 a los rangos del proxy.
+  //   // Medido el 2026-08-31 contra el endpoint real: responde 200 desde una
+  //   // IP doméstica mexicana, pero por el proxy contratado falla siempre. La
+  //   // zona es ISP, no residencial, y sus rangos (WS Telecom Inc, AS209372 y
+  //   // AS213541) están fichados. Forzar salida mexicana con -country-mx da
+  //   // una IP MX legítima y tampoco pasa.
+  // },
+  // {
+  //   provider: "TalentoNet (Newww, Red Aguila, Link Móvil)",
+  //   lookupFunction: loookupCURPInTalentoNetMVNO,
+  //   // Deshabilitado: 1 acierto de cada 4 intentos por el proxy, y el acierto
+  //   // llegó a 8.7s sobre un presupuesto de 12s. No es fiable.
+  //   // Medido el 2026-08-31 contra el endpoint real: responde 200 desde una
+  //   // IP doméstica mexicana, pero por el proxy contratado falla siempre. La
+  //   // zona es ISP, no residencial, y sus rangos (WS Telecom Inc, AS209372 y
+  //   // AS213541) están fichados. Forzar salida mexicana con -country-mx da
+  //   // una IP MX legítima y tampoco pasa.
+  // },
   {
     provider: "Virgin Mobile",
     lookupFunction: loookupCURPInVirginMobile,

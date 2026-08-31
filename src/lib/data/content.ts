@@ -65,7 +65,7 @@ export const ARCO_RIGHTS = [
 // que la barra de progreso avance sobre algo real; antes dividía entre
 // TOTAL_PROVIDERS y se congelaba al ~19%. Mantener sincronizado con el array
 // `providers` de src/app/api/lookup/route.ts (hay un test que lo verifica).
-export const ACTIVE_LOOKUP_PROVIDERS = 16;
+export const ACTIVE_LOOKUP_PROVIDERS = 13;
 
 export const QUERY_TIMEOUT_MS = 15000;
 
