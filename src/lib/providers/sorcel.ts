@@ -1,6 +1,5 @@
 import { FormData } from "undici";
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
-import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { residentialFetch } from "@/lib/providers/_proxy";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
@@ -24,9 +23,21 @@ export async function lookupCURPInSorcel(curp: string): Promise<LineResult> {
   try {
     const res = await residentialFetch(ENDPOINT, {
       method: "POST",
+      // NO mandar User-Agent aquí, a diferencia del resto de providers. El WAF
+      // de Sorcel devuelve 403 a cualquier petición que se declare Chrome
+      // cuando el fingerprint TLS no lo es — decir ser Chrome sin serlo es más
+      // sospechoso que no decir nada. Medido contra el endpoint el 2026-08-31:
+      // sin headers 200, con UA de Chrome 403, sólo UA 403, todos los headers
+      // menos el UA 200. El resto sí conviene: Accept-Encoding recorta el
+      // tráfico que pasa por el proxy residencial, facturado por GB.
+      //
       // Sin Content-Type explícito: undici tiene que poner el boundary del
       // multipart él mismo.
-      headers: { ...BROWSER_HEADERS, Accept: "text/html,*/*" },
+      headers: {
+        Accept: "text/html,*/*",
+        "Accept-Language": "es-MX,es;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+      },
       body: form,
       signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     });
