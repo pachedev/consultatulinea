@@ -149,11 +149,6 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  // Se define por entorno: sin token no se emite la meta en vez de emitirla
-  // vacía, que Search Console rechaza.
-  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
-    : undefined,
 };
 
 export default function RootLayout({
