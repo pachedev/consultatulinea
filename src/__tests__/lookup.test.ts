@@ -7,13 +7,22 @@ function confirmed(provider: string, lines: string[]): ProviderResponse {
   return { provider, result: { company: provider, lines, isRegistered: true } };
 }
 function notFound(provider: string): ProviderResponse {
-  return { provider, result: { company: provider, lines: [], isRegistered: false } };
+  return {
+    provider,
+    result: { company: provider, lines: [], isRegistered: false },
+  };
 }
 function unavailable(provider: string): ProviderResponse {
-  return { provider, result: { company: provider, lines: [], temporaryUnavailable: true } };
+  return {
+    provider,
+    result: { company: provider, lines: [], temporaryUnavailable: true },
+  };
 }
 function withError(provider: string): ProviderResponse {
-  return { provider, result: { company: provider, lines: [], error: "Error genérico" } };
+  return {
+    provider,
+    result: { company: provider, lines: [], error: "Error genérico" },
+  };
 }
 
 describe("transformApiResponse", () => {
@@ -32,7 +41,9 @@ describe("transformApiResponse", () => {
   });
 
   it("splits 'Brand: number' format into operadora + numero", () => {
-    const lines = transformApiResponse([confirmed("Altán", ["Sky: 5559999000"])]);
+    const lines = transformApiResponse([
+      confirmed("Altán", ["Sky: 5559999000"]),
+    ]);
     expect(lines[0].operadora).toBe("Sky");
     expect(lines[0].numero).toBe("5559999000");
   });
@@ -78,7 +89,10 @@ describe("transformApiResponse", () => {
     const lines = transformApiResponse([resp]);
     const possibles = lines.filter((l) => l.isPossible);
     expect(possibles).toHaveLength(2);
-    expect(possibles.map((l) => l.operadora).sort()).toEqual(["BienCel", "Sky"]);
+    expect(possibles.map((l) => l.operadora).sort()).toEqual([
+      "BienCel",
+      "Sky",
+    ]);
   });
 
   it("sorts: confirmed < possible < notFound < unavailable < error", () => {
@@ -112,7 +126,25 @@ describe("getRiskLevel", () => {
   });
 
   it("ignores notFound/error lines for risk calc", () => {
-    const lines = transformApiResponse([notFound("AT&T"), withError("Movistar")]);
+    const lines = transformApiResponse([
+      notFound("AT&T"),
+      withError("Movistar"),
+    ]);
     expect(getRiskLevel(lines).label).toBe("Sin Registro");
+  });
+
+  // El chip de riesgo mostraba una etiqueta sin explicar de dónde salía.
+  it("explica el porqué en los tres niveles", () => {
+    expect(getRiskLevel([]).reason).toBe(
+      "No se encontraron líneas confirmadas ni posibles.",
+    );
+
+    const una = transformApiResponse([confirmed("Telcel", ["5551234567"])]);
+    expect(getRiskLevel(una).reason).toContain("1 línea confirmada");
+
+    const varias = transformApiResponse([
+      confirmed("Telcel", ["5550000001", "5550000002", "5550000003"]),
+    ]);
+    expect(getRiskLevel(varias).reason).toContain("3 líneas confirmadas");
   });
 });

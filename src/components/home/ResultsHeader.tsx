@@ -115,6 +115,9 @@ export function ResultsHeader({
             </p>
             <p className="font-medium text-ink">{risk.label}</p>
             <p className="mt-0.5 text-xs text-ink-soft">{risk.description}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-faint">
+              {risk.reason}
+            </p>
           </div>
           <span className={cn("size-3 rounded-full", risk.color)} aria-hidden />
         </div>
