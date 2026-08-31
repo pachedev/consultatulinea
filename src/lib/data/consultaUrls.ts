@@ -65,7 +65,7 @@ export const CONSULTA_URLS: Record<string, string> = {
   "Móvil para Todos": "https://rnu.altanredes.com/consulta",
   Nabi: "https://rnu.altanredes.com/consulta",
   Netmas: "https://rnu.altanredes.com/consulta",
-  Newww: "https://consultavinculacion.newww.mx",
+  Newww: "https://vinculacion.newww.mx/consulta-vinculacion/",
   "Nextor Movil": "https://vinculacion.nextormovil.mx",
   "On-Link": "https://rnu.altanredes.com/consulta",
   "Othisi Mobile": "https://rnu.altanredes.com/consulta",

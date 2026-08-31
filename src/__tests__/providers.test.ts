@@ -3,6 +3,9 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTIVE_LOOKUP_PROVIDERS } from "@/lib/data/content";
 import { lookupCURPInMegamovil } from "@/lib/providers/megamovil";
+import { lookupCURPINNextorMovil } from "@/lib/providers/nextor-movil";
+import { lookupCURPInSorcel } from "@/lib/providers/sorcel";
+import { loookupCURPInTalentoNetMVNO } from "@/lib/providers/talentonet/mvno";
 import { loookupCURPInVirginMobile } from "@/lib/providers/virgin-mobile";
 import { loookupCURPINWeeex } from "@/lib/providers/weex";
 
@@ -202,5 +205,194 @@ describe("virgin mobile", () => {
 
     expect(result.isRegistered).toBe(true);
     expect(result.lines).toEqual(["******4567"]);
+  });
+});
+
+// ── Providers reactivados vía proxy residencial (2026-08-31) ────────────────
+// Los tres salen por `residentialFetch`, que el mock de arriba redirige a
+// `proxyFetch`.
+
+const res = (init: {
+  ok?: boolean;
+  status?: number;
+  json?: unknown;
+  text?: string;
+}) => ({
+  ok: init.ok ?? true,
+  status: init.status ?? (init.ok === false ? 500 : 200),
+  statusText: init.ok === false ? "Error" : "OK",
+  json: async () => init.json,
+  text: async () => init.text ?? "",
+});
+
+describe("sorcel", () => {
+  // La plantilla de Sorcel renderiza el armazón de la tabla SIEMPRE, también
+  // cuando no hay registros. Verificado contra el endpoint real el 2026-08-31.
+  const TABLE = 'Listado de líneas <table class="esp">';
+  const NO_RECORDS = `${TABLE} No hay registros para esa RFC/CURP`;
+
+  beforeEach(() => proxyFetch.mockReset());
+
+  it("reporta sin registro con la página de 'no hay registros'", async () => {
+    proxyFetch.mockResolvedValueOnce(res({ text: NO_RECORDS }));
+
+    const result = await lookupCURPInSorcel(CURP);
+
+    expect(result.isRegistered).toBe(false);
+    expect(result.temporaryUnavailable).toBeUndefined();
+  });
+
+  it("reporta registro cuando llega la página sin el marcador de vacío", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      res({ text: `${TABLE} <tr><td>555…</td></tr>` }),
+    );
+
+    expect((await lookupCURPInSorcel(CURP)).isRegistered).toBe(true);
+  });
+
+  // Este es el falso positivo que upstream reprodujo con CURPs de usuarios
+  // reales: la página de Cloudflare no contiene "No hay registros", y sin la
+  // guarda se declaraba `isRegistered: true`.
+  it("NO afirma registro ante un challenge de Cloudflare", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      res({
+        text: "<html><title>Attention Required! | Cloudflare</title></html>",
+      }),
+    );
+
+    const result = await lookupCURPInSorcel(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+
+  it("marca indisponible ante 403", async () => {
+    proxyFetch.mockResolvedValueOnce(res({ ok: false, status: 403 }));
+
+    const result = await lookupCURPInSorcel(CURP);
+
+    expect(result.temporaryUnavailable).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("marca indisponible ante timeout", async () => {
+    const timeout = Object.assign(new Error("timed out"), {
+      name: "TimeoutError",
+    });
+    proxyFetch.mockRejectedValueOnce(timeout);
+
+    expect((await lookupCURPInSorcel(CURP)).temporaryUnavailable).toBe(true);
+  });
+});
+
+describe("nextor movil", () => {
+  beforeEach(() => proxyFetch.mockReset());
+
+  it("usa la misma conexión para iniciar y pre-check", async () => {
+    proxyFetch
+      .mockResolvedValueOnce(res({ json: { sessionId: "s-1" } }))
+      .mockResolvedValueOnce(res({ json: { encontrado: false } }));
+
+    await lookupCURPINNextorMovil(CURP);
+
+    // Ambas por residentialFetch: mismo dispatcher singleton, misma IP de
+    // salida. El sessionId queda ligado a la IP que lo pidió.
+    expect(proxyFetch).toHaveBeenCalledTimes(2);
+    expect(proxyFetch.mock.calls[1][1].headers["X-Session-Id"]).toBe("s-1");
+  });
+
+  it("trata el rate limit por IP como indisponibilidad, no como error", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      res({ ok: false, status: 429, json: { code: "IP_RATE_LIMIT" } }),
+    );
+
+    const result = await lookupCURPINNextorMovil(CURP);
+
+    expect(result.temporaryUnavailable).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("no consulta pre-check si iniciar no devuelve sessionId", async () => {
+    proxyFetch.mockResolvedValueOnce(res({ json: {} }));
+
+    const result = await lookupCURPINNextorMovil(CURP);
+
+    expect(result.temporaryUnavailable).toBe(true);
+    expect(result.isRegistered).toBeUndefined();
+    expect(proxyFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("mapea encontrado true/false", async () => {
+    proxyFetch
+      .mockResolvedValueOnce(res({ json: { sessionId: "s" } }))
+      .mockResolvedValueOnce(res({ json: { encontrado: true } }));
+    expect((await lookupCURPINNextorMovil(CURP)).isRegistered).toBe(true);
+
+    proxyFetch.mockReset();
+    proxyFetch
+      .mockResolvedValueOnce(res({ json: { sessionId: "s" } }))
+      .mockResolvedValueOnce(res({ json: { encontrado: false } }));
+    expect((await lookupCURPINNextorMovil(CURP)).isRegistered).toBe(false);
+  });
+
+  it("no afirma 'sin registro' si falta el campo encontrado", async () => {
+    proxyFetch
+      .mockResolvedValueOnce(res({ json: { sessionId: "s" } }))
+      .mockResolvedValueOnce(res({ json: { mensaje: "ok" } }));
+
+    const result = await lookupCURPINNextorMovil(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+});
+
+describe("talentonet", () => {
+  beforeEach(() => proxyFetch.mockReset());
+
+  it("reporta sin registro sólo con el mensaje esperado en el 404", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      res({
+        ok: false,
+        status: 404,
+        json: { msg: "No se encontraron registros para esta CURP." },
+      }),
+    );
+
+    const result = await loookupCURPInTalentoNetMVNO(CURP);
+
+    expect(result.isRegistered).toBe(false);
+    expect(result.possibleProviders).toEqual([
+      "Newww",
+      "RedAguila",
+      "Link Movil",
+    ]);
+  });
+
+  // Un 404 del WAF o de una ruta movida no es "esta CURP no tiene líneas".
+  it("no afirma 'sin registro' ante un 404 con otro cuerpo", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      res({ ok: false, status: 404, json: { error: "Not Found" } }),
+    );
+
+    const result = await loookupCURPInTalentoNetMVNO(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+
+  it("reporta registro con 200 y cuerpo legible", async () => {
+    proxyFetch.mockResolvedValueOnce(res({ json: { lineas: 2 } }));
+
+    expect((await loookupCURPInTalentoNetMVNO(CURP)).isRegistered).toBe(true);
+  });
+
+  it("marca indisponible ante 403", async () => {
+    proxyFetch.mockResolvedValueOnce(res({ ok: false, status: 403 }));
+
+    const result = await loookupCURPInTalentoNetMVNO(CURP);
+
+    expect(result.temporaryUnavailable).toBe(true);
+    expect(result.error).toBeUndefined();
   });
 });

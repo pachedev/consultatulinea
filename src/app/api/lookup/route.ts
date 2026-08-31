@@ -4,6 +4,7 @@ export const maxDuration = 120;
 import type { NextRequest } from "next/server";
 import {
   lookupCURPINMobig,
+  lookupCURPINNextorMovil,
   lookupCURPInABIB,
   lookupCURPInAltanMVNO,
   lookupCURPInBeneleit,
@@ -13,13 +14,15 @@ import {
   lookupCURPInLogisticaACN,
   lookupCURPInMegamovil,
   lookupCURPInMirlo,
+  lookupCURPInSorcel,
   lookupCURPInTelcel,
-  loookupCURPInVirginMobile,
   loookupCURPINWeeex,
+  loookupCURPInTalentoNetMVNO,
+  loookupCURPInVirginMobile,
 } from "@/lib/providers";
-import { validateCURP } from "@/lib/providers/curp";
 import { cachedLookup } from "@/lib/providers/_cache";
 import { getPortalUrl } from "@/lib/providers/_portals";
+import { validateCURP } from "@/lib/providers/curp";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
@@ -99,21 +102,18 @@ const providers: Array<{
     provider: "MoBig",
     lookupFunction: lookupCURPINMobig,
   },
-  // {
-  //   provider: "Nextor Movil",
-  //   lookupFunction: lookupCURPINNextorMovil,
-  //   // Disabled: rate limit
-  // },
-  // {
-  //   provider: "Sorcel",
-  //   lookupFunction: lookupCURPInSorcel,
-  //   // Disabled: Cloudflare JS challenge blocks server-side requests
-  // },
-  // {
-  //   provider: "TalentoNet (Newww, Red Aguila, Link Móvil)",
-  //   lookupFunction: loookupCURPInTalentoNetMVNO,
-  //   // Disabled: ConnectTimeoutError on core.newww.mx:443
-  // },
+  {
+    provider: "Nextor Movil",
+    lookupFunction: lookupCURPINNextorMovil,
+  },
+  {
+    provider: "Sorcel",
+    lookupFunction: lookupCURPInSorcel,
+  },
+  {
+    provider: "TalentoNet (Newww, Red Aguila, Link Móvil)",
+    lookupFunction: loookupCURPInTalentoNetMVNO,
+  },
   {
     provider: "Virgin Mobile",
     lookupFunction: loookupCURPInVirginMobile,
@@ -133,6 +133,9 @@ const providers: Array<{
   //   // Challenge de Cloudflare — responde 403 con `cf-mitigated: challenge`
   //   // incluso con headers de navegador y HTTP/2. Es fingerprint TLS + JS, no
   //   // reputación de IP, así que ningún proxy lo evita. Verificado 2026-08-13.
+  //   // Confirmado de forma independiente por MisLíneas (f04f5d7, 2026-08-19):
+  //   // mismo 403 desde su servidor directo, desde su proxy residencial y desde
+  //   // una red doméstica ajena. A diferencia de Sorcel, aquí el proxy no ayuda.
   //   // Mantenerlo activo solo producía una tarjeta "Error al consultar" que
   //   // además duplicaba a la operadora: operators.ts ya la marca como "paused",
   //   // así que aparece en la sección de consulta manual con su portal correcto.
