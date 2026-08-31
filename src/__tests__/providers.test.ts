@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTIVE_LOOKUP_PROVIDERS } from "@/lib/data/content";
+import { lookupCURPInABIB } from "@/lib/providers/abib";
+import { lookupCURPInDialo } from "@/lib/providers/dialo";
 import { lookupCURPInMegamovil } from "@/lib/providers/megamovil";
+import { lookupCURPInMirlo } from "@/lib/providers/mirlo";
 import { lookupCURPINNextorMovil } from "@/lib/providers/nextor-movil";
 import { lookupCURPInSorcel } from "@/lib/providers/sorcel";
 import { loookupCURPInTalentoNetMVNO } from "@/lib/providers/talentonet/mvno";
@@ -394,5 +397,130 @@ describe("talentonet", () => {
 
     expect(result.temporaryUnavailable).toBe(true);
     expect(result.error).toBeUndefined();
+  });
+});
+
+// ── Endurecimiento de detección positiva (auditoría 2026-08-31) ─────────────
+// Los tres derivaban isRegistered de la AUSENCIA de algo en vez de confirmar
+// una forma esperada. Misma clase de bug que el falso positivo de Sorcel.
+
+describe("dialo", () => {
+  it("cuenta las líneas cuando total viene", async () => {
+    mockFetch({ body: { data: [{ total: 2 }] } });
+    expect((await lookupCURPInDialo(CURP)).isRegistered).toBe(true);
+
+    mockFetch({ body: { data: [{ total: 0 }] } });
+    expect((await lookupCURPInDialo(CURP)).isRegistered).toBe(false);
+  });
+
+  // Antes: `data.body.data[0].total > 0` con `total` undefined da false, así
+  // que un sobre de error del Lambda se mostraba como "sin registro".
+  it("no afirma 'sin registro' si falta total", async () => {
+    mockFetch({ body: { data: [{}] } });
+
+    const result = await lookupCURPInDialo(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+
+  it("no truena si el sobre viene sin body", async () => {
+    mockFetch({ errorMessage: "internal" });
+
+    const result = await lookupCURPInDialo(CURP);
+
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+});
+
+describe("mirlo", () => {
+  beforeEach(() => proxyFetch.mockReset());
+
+  const ok = (json: unknown) => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => json,
+  });
+
+  it("reporta sin registro con el mensaje conocido", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      ok({
+        status: 404,
+        message: "No se encontró titular con el CURP proporcionado",
+      }),
+    );
+
+    expect((await lookupCURPInMirlo(CURP)).isRegistered).toBe(false);
+  });
+
+  // Espejo del falso positivo de Sorcel: cualquier otra cosa era un "sí".
+  it("NO afirma registro ante un error con otro mensaje", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      ok({ status: 500, message: "Servicio no disponible" }),
+    );
+
+    const result = await lookupCURPInMirlo(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+
+  it("sigue reportando registro con una respuesta normal", async () => {
+    proxyFetch.mockResolvedValueOnce(ok({ status: 200, data: { lineas: 1 } }));
+
+    expect((await lookupCURPInMirlo(CURP)).isRegistered).toBe(true);
+  });
+});
+
+describe("abib", () => {
+  beforeEach(() => proxyFetch.mockReset());
+
+  const ok = (json: unknown) => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => json,
+  });
+
+  // Respuesta real capturada del API el 2026-08-31. No trae campo `status`:
+  // el código anterior decidía con !data?.status, que aquí es siempre true, así
+  // que ABIB reportaba "sin registro" para cualquier CURP.
+  it("reconoce el 'sin registro' real del API", async () => {
+    proxyFetch.mockResolvedValueOnce(
+      ok({
+        success: false,
+        message: "La CURP no cuenta con números vinculados",
+        error_code: "CLIENT_NOT_FOUND",
+        data: [],
+      }),
+    );
+
+    const result = await lookupCURPInABIB(CURP);
+
+    expect(result.isRegistered).toBe(false);
+    expect(result.temporaryUnavailable).toBeUndefined();
+  });
+
+  it("reporta registro cuando success es true", async () => {
+    proxyFetch.mockResolvedValueOnce(ok({ success: true, data: [{}] }));
+
+    expect((await lookupCURPInABIB(CURP)).isRegistered).toBe(true);
+  });
+
+  // Compatibilidad con la forma vieja, por si alguna ruta aún la devuelve.
+  it("sigue aceptando el campo status heredado", async () => {
+    proxyFetch.mockResolvedValueOnce(ok({ status: true }));
+
+    expect((await lookupCURPInABIB(CURP)).isRegistered).toBe(true);
+  });
+
+  it("no afirma nada ante una forma desconocida", async () => {
+    proxyFetch.mockResolvedValueOnce(ok({ mensaje: "mantenimiento" }));
+
+    const result = await lookupCURPInABIB(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
   });
 });
