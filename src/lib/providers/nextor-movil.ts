@@ -1,7 +1,7 @@
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { residentialFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const COMPANY = "Nextor Movil";
@@ -98,21 +98,18 @@ export async function lookupCURPINNextorMovil(
     if (typeof data?.encontrado !== "boolean") {
       console.error(
         "[nextor-movil] respuesta sin campo `encontrado`:",
-        stripCURPs(data),
+        describeShape(data),
       );
       return { company: COMPANY, lines: [], temporaryUnavailable: true };
     }
 
     if (data.encontrado) {
-      console.log(
-        "[nextor-movil] registered response:",
-        JSON.stringify(stripCURPs(data), null, 2),
-      );
+      // Sin volcar el cuerpo: trae datos personales del titular.
+      console.log("[nextor-movil] registered response");
       return {
         company: COMPANY,
         lines: [],
         isRegistered: true,
-        rawApiResponse: data,
       };
     }
 

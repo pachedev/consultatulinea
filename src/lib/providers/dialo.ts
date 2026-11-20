@@ -1,6 +1,6 @@
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const COMPANY = "Dialo";
@@ -54,21 +54,18 @@ export async function lookupCURPInDialo(curp: string): Promise<LineResult> {
     if (typeof total !== "number") {
       console.error(
         "[dialo] respuesta sin `total` numérico:",
-        stripCURPs(data),
+        describeShape(data),
       );
       return { company: COMPANY, lines: [], temporaryUnavailable: true };
     }
 
     if (total > 0) {
-      console.log(
-        "[dialo] registered response:",
-        JSON.stringify(stripCURPs(data), null, 2),
-      );
+      // Sin volcar el cuerpo: trae datos personales del titular.
+      console.log("[dialo] registered response");
       return {
         company: COMPANY,
         lines: [],
         isRegistered: true,
-        rawApiResponse: data,
       };
     }
 

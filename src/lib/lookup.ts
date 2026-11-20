@@ -91,15 +91,19 @@ export function transformApiResponse(
 
     if (result.isRegistered) {
       if (result.possibleProviders && result.possibleProviders.length > 0) {
-        for (const posible of result.possibleProviders) {
-          lines.push({
-            id: `${provider}-possible-${posible}`,
-            operadora: posible,
-            numero: "Número no confirmado",
-            isPossible: true,
-            disclaimer: result.possibleDisclaimer,
-          });
-        }
+        // El proveedor confirmó que hay una línea, pero no sabe a cuál de
+        // sus sub-marcas pertenece. Es UNA línea: una sola tarjeta con las
+        // marcas candidatas, no una tarjeta por marca.
+        const candidates = result.possibleProviders.join(", ");
+        lines.push({
+          id: `${provider}-possible-group`,
+          operadora: result.company || provider,
+          numero: "Número no confirmado",
+          isPossible: true,
+          disclaimer: result.possibleDisclaimer
+            ? `${result.possibleDisclaimer} Marcas candidatas: ${candidates}.`
+            : `Marca exacta no confirmada por el operador. Marcas candidatas: ${candidates}.`,
+        });
       } else if (!hasLines) {
         lines.push({
           id: `${provider}-hidden`,

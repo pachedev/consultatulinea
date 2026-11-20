@@ -9,8 +9,11 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import type { FormEvent } from "react";
-import { CURP_REGEX, getCurpValidationError } from "@/lib/curp";
+import Link from "next/link";
+import { type FormEvent, useRef, useState } from "react";
+import { Turnstile, type TurnstileHandle } from "@/components/ui/Turnstile";
+import { CURP_REGEX, getCurpValidationError, maskCurp } from "@/lib/curp";
+import { TURNSTILE_ENABLED, TURNSTILE_SITE_KEY } from "@/lib/turnstile-client";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -20,9 +23,11 @@ type Props = {
   error: string | null;
   timedOut: boolean;
   history: string[];
-  onSubmit: (e: FormEvent) => void;
+  /** `turnstileToken` va vacío cuando el widget no está configurado. */
+  onSubmit: (turnstileToken: string) => void;
   onRetry: () => void;
   onSelectHistory: (v: string) => void;
+  onClearHistory: () => void;
 };
 
 export function CurpForm({
@@ -35,9 +40,49 @@ export function CurpForm({
   onSubmit,
   onRetry,
   onSelectHistory,
+  onClearHistory,
 }: Props) {
   const validationError = getCurpValidationError(curp);
   const isValid = CURP_REGEX.test(curp);
+
+  // La verificación se lanza al pulsar "Consultar", no al cargar la página
+  // ni al volver a montarse el formulario: una sola por consulta.
+  const turnstileRef = useRef<TurnstileHandle>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const busy = loading || verifying;
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (busy || !isValid) return;
+    setVerifyError(null);
+    if (!TURNSTILE_ENABLED) {
+      onSubmit("");
+      return;
+    }
+    if (turnstileRef.current?.execute()) {
+      setVerifying(true);
+    } else {
+      setVerifyError(
+        "La verificación de seguridad aún está cargando. Intenta de nuevo en un momento.",
+      );
+    }
+  };
+
+  const handleToken = (token: string) => {
+    // Solo si la pidió un envío: evita consultar por un token que llegue tarde.
+    if (!verifying) return;
+    setVerifying(false);
+    onSubmit(token);
+  };
+
+  const handleVerifyFailure = () => {
+    if (!verifying) return;
+    setVerifying(false);
+    setVerifyError(
+      "No pudimos verificar que no eres un bot. Intenta de nuevo o recarga la página.",
+    );
+  };
 
   const counterColor =
     curp.length === 18
@@ -61,7 +106,7 @@ export function CurpForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label
           htmlFor="curp-input"
@@ -154,7 +199,14 @@ export function CurpForm({
               Búsquedas recientes
             </p>
             <span className="text-[11px] text-ink-faint">
-              Solo en tu navegador
+              Solo en tu navegador ·{" "}
+              <button
+                type="button"
+                onClick={onClearHistory}
+                className="underline underline-offset-2 hover:text-ink"
+              >
+                Borrar
+              </button>
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -164,24 +216,37 @@ export function CurpForm({
                 type="button"
                 disabled={loading}
                 onClick={() => onSelectHistory(h)}
+                aria-label={`Usar la CURP guardada que termina en ${h.slice(-2)}`}
                 className="tabular rounded-md border border-line bg-surface px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-line-strong hover:text-ink disabled:opacity-40"
               >
-                {h}
+                {maskCurp(h)}
               </button>
             ))}
           </div>
         </div>
       ) : null}
 
+      {TURNSTILE_ENABLED ? (
+        <Turnstile
+          ref={turnstileRef}
+          mode="on-demand"
+          siteKey={TURNSTILE_SITE_KEY}
+          action="lookup"
+          onVerify={handleToken}
+          onExpire={handleVerifyFailure}
+          onError={handleVerifyFailure}
+        />
+      ) : null}
+
       <button
         type="submit"
-        disabled={loading || !isValid}
+        disabled={busy || !isValid}
         className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 font-medium text-paper transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {loading ? (
+        {busy ? (
           <>
             <Loader2 className="size-4 animate-spin" aria-hidden />
-            Escaneando…
+            {verifying ? "Verificando…" : "Escaneando…"}
           </>
         ) : (
           <>
@@ -191,6 +256,27 @@ export function CurpForm({
           </>
         )}
       </button>
+
+      {TURNSTILE_ENABLED ? (
+        <p className="text-center text-[11px] text-ink-faint">
+          Protegido contra bots por Cloudflare Turnstile.{" "}
+          <Link
+            href="/aviso-de-privacidad#verificacion"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            Privacidad
+          </Link>
+        </p>
+      ) : null}
+
+      {verifyError ? (
+        <p
+          className="rounded-lg border border-error/40 bg-error-bg px-3.5 py-3 text-sm text-error"
+          role="alert"
+        >
+          {verifyError}
+        </p>
+      ) : null}
 
       {error || timedOut ? (
         <div

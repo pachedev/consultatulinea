@@ -1,6 +1,6 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { proxyFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const TIMEOUT_MS = 12_000;
@@ -50,7 +50,7 @@ export async function lookupCURPInIENTC(curp: string): Promise<LineResult> {
       if (data?.detail?.code === "No hay usuarios con ese RFC o CURP") {
         return { company: "IENTC", lines: [], isRegistered: false };
       }
-      console.error("[ientc] unexpected 404:", JSON.stringify(stripCURPs(data), null, 2));
+      console.error("[ientc] unexpected 404:", describeShape(data));
       return { company: "IENTC", lines: [], error: "Unexpected error validating CURP with IENTC" };
     }
 
@@ -65,8 +65,8 @@ export async function lookupCURPInIENTC(curp: string): Promise<LineResult> {
     }
 
     const data = await res.json().catch(() => null);
-    console.log("[ientc] registered:", JSON.stringify(stripCURPs(data), null, 2));
-    return { company: "IENTC", lines: [], isRegistered: true, rawApiResponse: data };
+    console.log("[ientc] registered:", describeShape(data));
+    return { company: "IENTC", lines: [], isRegistered: true };
   } catch (err) {
     console.error("[ientc]", (err as Error)?.name === "AbortError" ? "timeout" : err);
     return { company: "IENTC", lines: [], temporaryUnavailable: true };

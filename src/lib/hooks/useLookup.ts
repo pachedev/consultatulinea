@@ -20,7 +20,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
 
-  const consultar = async (curp: string) => {
+  const consultar = async (curp: string, turnstileToken = "") => {
     abortRef.current?.abort();
 
     const requestId = requestIdRef.current + 1;
@@ -53,7 +53,7 @@ export function useLookup(onConsult?: (curp: string) => void) {
       const response = await fetch("/api/lookup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ curp: curp.toUpperCase() }),
+        body: JSON.stringify({ curp: curp.toUpperCase(), turnstileToken }),
         signal: controller.signal,
       });
 
@@ -118,32 +118,9 @@ export function useLookup(onConsult?: (curp: string) => void) {
 
       setLiveMessage("Consulta completada.");
       clearTimeout(timeoutId);
-
-      fetch("/api/event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          // scanned_count = respuestas de proveedor (peticiones reales).
-          // operators_covered = marcas que esas peticiones cubren: Red Altan
-          // resuelve 65 marcas en una sola llamada, así que sin este campo el
-          // panel de admin decía "20 operadores" para una consulta que revisó
-          // más de 80.
-          scanned_count: accumulated.length,
-          operators_covered: transformApiResponse([...accumulated]).length,
-          confirmed_count: accumulated.filter(
-            (r) => (r.result.lines?.length ?? 0) > 0,
-          ).length,
-          possible_count: accumulated.filter(
-            (r) => (r.result.possibleProviders?.length ?? 0) > 0,
-          ).length,
-          error_count: accumulated.filter(
-            (r) => !!r.result.error || r.result.temporaryUnavailable,
-          ).length,
-          has_results: accumulated.some(
-            (r) => (r.result.lines?.length ?? 0) > 0,
-          ),
-        }),
-      }).catch(() => {});
+      // El evento de uso lo registra el servidor al cerrar el stream: el
+      // navegador ya no reporta nada (era inflable y se perdía al cerrar la
+      // pestaña).
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if ((err as Error)?.name === "AbortError") return;

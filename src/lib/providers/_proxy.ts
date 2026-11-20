@@ -48,3 +48,31 @@ export const hasProxy = Boolean(PROXY_URL);
 const RESIDENTIAL_PROXY_URL = process.env.RESIDENTIAL_PROXY_URL ?? "";
 export const residentialFetch = makeProxyFetch(RESIDENTIAL_PROXY_URL);
 export const hasResidentialProxy = Boolean(RESIDENTIAL_PROXY_URL);
+
+/**
+ * Sesión de un solo uso por el proxy residencial: dispatcher propio, sin
+ * keep-alive. El proxy comercial rota la IP de salida por conexión, y el
+ * singleton de `residentialFetch` reutiliza su socket, así que reintentar con él
+ * suele salir por la MISMA IP que acaban de bloquear. Para reintentar con otra
+ * IP hay que abrir una conexión nueva. Llamar a `close()` al terminar.
+ */
+export function newResidentialSession() {
+  const connect = { rejectUnauthorized: false };
+  const dispatcher = RESIDENTIAL_PROXY_URL
+    ? new ProxyAgent({
+        uri: RESIDENTIAL_PROXY_URL,
+        connect,
+        allowH2: false,
+        pipelining: 0,
+      })
+    : new Agent({ connect, allowH2: false, pipelining: 0 });
+
+  return {
+    fetch: (
+      url: string | URL,
+      init?: Parameters<typeof undiciFetch>[1],
+    ): ReturnType<typeof undiciFetch> =>
+      undiciFetch(url, { ...init, dispatcher }),
+    close: () => dispatcher.close().catch(() => {}),
+  };
+}

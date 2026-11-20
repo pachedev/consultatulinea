@@ -1,4 +1,5 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
+import { maskMsisdn } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const TIMEOUT_MS = 12_000;
@@ -54,9 +55,9 @@ export async function loookupCURPInVirginMobile(
 
     return {
       company: "Virgin Mobile",
-      lines: data.data.lineas ?? [],
+      // No confiamos en que el operador ya lo mande enmascarado.
+      lines: (data.data.lineas ?? []).map(maskMsisdn),
       isRegistered: true,
-      rawApiResponse: data,
     };
   } catch (err) {
     const isTimeout = (err as Error)?.name === "AbortError";

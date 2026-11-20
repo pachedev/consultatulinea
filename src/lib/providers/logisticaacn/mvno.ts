@@ -35,10 +35,10 @@ export async function lookupCURPInLogisticaACN(
 
     return {
       company: "Logistica ACN",
-      possibleProviders: possibleProviders,
+      // Sin possibleProviders: las líneas ya vienen confirmadas con su marca,
+      // así que no hay nada "posible" que añadir encima.
       lines,
       isRegistered: true,
-      rawApiResponse: validationData,
     };
   }
 

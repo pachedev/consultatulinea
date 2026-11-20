@@ -33,6 +33,8 @@ export function getOperatorDisplayStatus(
 export const OPERATORS: OperatorEntry[] = [
   { name: "2y2x", status: "supported" },
   { name: "Abafon", status: "supported" },
+  // Se consulta vía Red Altán (ALTAN_MVNO_PROVIDERS); su API propia sigue
+  // deshabilitada en el route.
   { name: "Abib", status: "supported" },
   { name: "Abix", status: "supported" },
   { name: "Addinteli", status: "supported" },
@@ -47,9 +49,17 @@ export const OPERATORS: OperatorEntry[] = [
     name: "AT&T / Unefon / WIM",
     status: "paused",
     reason:
-      "Su portal bloquea peticiones desde servidor. Consulta directamente en el portal oficial de AT&T.",
+      "El portal de AT&T responde lo mismo para cualquier CURP, por eso la consulta está en pausa. Consulta directamente en el portal oficial de AT&T.",
   },
-  { name: "Bait", status: "supported" },
+  { name: "Axios Mobile", status: "supported" },
+  // Ningún provider la consultaba: figuraba como soportada sin estarlo.
+  // MisLíneas la marca en pausa como marca de AT&T.
+  {
+    name: "Bait",
+    status: "paused",
+    reason:
+      "Es una marca de AT&T, cuya consulta está en pausa. Consulta en su portal oficial.",
+  },
   { name: "Beneleit Móvil", status: "supported" },
   {
     name: "Bestel",
@@ -58,11 +68,15 @@ export const OPERATORS: OperatorEntry[] = [
   },
   { name: "BienCel", status: "supported" },
   { name: "Bigcel", status: "supported" },
+  { name: "Bnext", status: "supported" },
   { name: "Bromovil", status: "supported" },
   { name: "Cablecom", status: "paused", reason: "Requiere inicio de sesión." },
   { name: "CFE", status: "supported" },
   { name: "Chedraui Móvil", status: "supported" },
   { name: "Chip Macropay", status: "supported" },
+  { name: "Chuliphone", status: "supported" },
+  { name: "Conec-Rural", status: "supported" },
+  { name: "Conectacel México", status: "supported" },
   { name: "CoolMobile", status: "supported" },
   { name: "Comunicaciones Green", status: "supported" },
   { name: "Conect2", status: "supported" },
@@ -71,7 +85,12 @@ export const OPERATORS: OperatorEntry[] = [
     status: "paused",
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
-  { name: "Dialo", status: "supported" },
+  {
+    name: "Dialo",
+    status: "paused",
+    reason:
+      "Su servicio de consulta dejó de estar disponible. Consulta en su portal oficial.",
+  },
   { name: "Diri Móvil", status: "supported" },
   { name: "Dua", status: "supported" },
   { name: "ENI Networks", status: "supported" },
@@ -87,15 +106,20 @@ export const OPERATORS: OperatorEntry[] = [
   { name: "Gmovil", status: "supported" },
   { name: "Grupo Inten", status: "supported" },
   { name: "Hashtag", status: "supported" },
+  { name: "Hicel", status: "supported" },
   { name: "I AM Abundance", status: "supported" },
   { name: "IENTC", status: "supported" },
+  { name: "Inphonity", status: "supported" },
   { name: "Interlinked", status: "supported" },
   { name: "Inxel", status: "supported" },
   { name: "Iusatel", status: "supported" },
   { name: "Izzi", status: "paused", reason: "Requiere inicio de sesión." },
+  { name: "JRmovil", status: "supported" },
+  { name: "Likephone", status: "supported" },
   { name: "Link Móvil", status: "supported" },
   { name: "Kolors Mobile", status: "supported" },
   { name: "Maifon", status: "supported" },
+  { name: "Maya Móvil", status: "supported" },
   { name: "Mega Móvil", status: "supported" },
   { name: "México Móvil", status: "supported" },
   { name: "Mexfon", status: "supported" },
@@ -104,6 +128,7 @@ export const OPERATORS: OperatorEntry[] = [
     status: "paused",
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
+  { name: "Miio", status: "supported" },
   { name: "Mirlo", status: "supported" },
   { name: "MoBig", status: "verify", reason: "Falta verificar." },
   {
@@ -112,10 +137,13 @@ export const OPERATORS: OperatorEntry[] = [
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
   { name: "MobileArionet", status: "supported" },
+  { name: "MOVER-T Móvil", status: "supported" },
   { name: "Movired", status: "supported" },
   { name: "Móvil para Todos", status: "supported" },
+  { name: "Mujer Móvil", status: "supported" },
   { name: "Nabi", status: "supported" },
   { name: "Netmas", status: "supported" },
+  { name: "Netwey", status: "supported" },
   {
     name: "Newww",
     status: "paused",
@@ -126,7 +154,9 @@ export const OPERATORS: OperatorEntry[] = [
     status: "paused",
     reason: "Su API no acepta conexiones desde el proxy.",
   },
+  { name: "Ocean Móvil", status: "supported" },
   { name: "On-Link", status: "supported" },
+  { name: "Orange", status: "supported" },
   { name: "OUI", status: "supported" },
   { name: "Othisi Mobile", status: "supported" },
   {
@@ -135,6 +165,7 @@ export const OPERATORS: OperatorEntry[] = [
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
   { name: "OXXO CEL", status: "supported" },
+  { name: "Pagacel", status: "supported" },
   { name: "PilloFon", status: "supported" },
   { name: "Playcell", status: "supported" },
   {
@@ -144,15 +175,23 @@ export const OPERATORS: OperatorEntry[] = [
   },
   { name: "Red Blak", status: "supported" },
   { name: "Red Dog", status: "supported" },
-  { name: "Red Potencia", status: "supported" },
+  // Tiene portal propio y ningún provider la consulta (2026-11-20).
+  {
+    name: "Red Potencia",
+    status: "paused",
+    reason:
+      "Aún no la consultamos en automático. Consulta en su portal oficial.",
+  },
   {
     name: "Redphone",
     status: "paused",
     reason: "Recaptcha bloquea peticiones desde servidor.",
   },
   { name: "Redicoppel", status: "supported" },
+  { name: "Redy Movil", status: "supported" },
   { name: "Retemex", status: "supported" },
   { name: "RETESEC", status: "supported" },
+  { name: "Rex Movil", status: "supported" },
   { name: "Rincel", status: "supported" },
   { name: "Secure Witness", status: "supported" },
   { name: "Sfon", status: "supported" },
@@ -161,13 +200,11 @@ export const OPERATORS: OperatorEntry[] = [
     status: "paused",
     reason: "Requiere login para consultar líneas.",
   },
-  {
-    name: "Sorcel",
-    status: "paused",
-    reason: "Cloudflare bloquea los rangos del proxy.",
-  },
+  { name: "Softcell", status: "supported" },
+  { name: "Sorcel", status: "supported" },
   { name: "Spot 1", status: "supported" },
   { name: "Starline", status: "supported" },
+  { name: "Sueñainc", status: "supported" },
   { name: "Telcel", status: "supported" },
   { name: "Telefónica Luna", status: "supported" },
   { name: "Telgen", status: "supported" },
@@ -189,12 +226,25 @@ export const OPERATORS: OperatorEntry[] = [
   { name: "Turbored", status: "supported" },
   { name: "Uber Cel", status: "supported" },
   { name: "Ultracel", status: "supported" },
+  { name: "Valor Telecomm", status: "supported" },
   { name: "Vasanta", status: "supported" },
+  { name: "Viasat", status: "supported" },
+  {
+    name: "Vinoc",
+    status: "paused",
+    reason: "reCAPTCHA bloquea peticiones desde servidor.",
+  },
   { name: "Viral Cel", status: "paused", reason: "Requiere inicio de sesión." },
   { name: "Virgin Mobile", status: "supported" },
   { name: "VivaMX", status: "supported" },
   { name: "Weex", status: "supported" },
-  { name: "Wiicel", status: "supported" },
+  // Tiene portal propio y ningún provider la consulta (2026-11-20).
+  {
+    name: "Wiicel",
+    status: "paused",
+    reason:
+      "Aún no la consultamos en automático. Consulta en su portal oficial.",
+  },
   { name: "Wiki Katat", status: "supported" },
   { name: "Wimotelecom", status: "supported" },
   {

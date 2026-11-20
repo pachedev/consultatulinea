@@ -1,7 +1,7 @@
 import { createCipheriv } from "node:crypto";
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { residentialFetch as undiciFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape, maskMsisdn } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const SECRET_KEY = "key_t3lcel_prod";
@@ -83,7 +83,7 @@ async function fetchSubscriptions(encryptedCURP: string): Promise<FetchResult> {
   if (!response.ok) {
     console.error(
       `[freedompop] HTTP ${response.status} — body:`,
-      JSON.stringify(stripCURPs(data), null, 2),
+      describeShape(data),
     );
     return { ok: false, transient: true, status: response.status };
   }
@@ -164,7 +164,8 @@ export async function lookupCURPInFreedompop(
       .trim();
     const brand = BRAND_MAP[raw.toLowerCase()] ?? raw;
     if (!byBrand.has(brand)) byBrand.set(brand, []);
-    byBrand.get(brand)!.push(sub.msisdn);
+    // El operador entrega el número completo: se enmascara aquí mismo.
+    byBrand.get(brand)?.push(maskMsisdn(sub.msisdn));
   }
 
   return FREEDOMPOP_PROVIDERS.map((company) => {
@@ -173,7 +174,6 @@ export async function lookupCURPInFreedompop(
       company,
       lines,
       isRegistered: lines.length > 0,
-      ...(lines.length === 0 ? {} : { rawApiResponse: data }),
     };
   });
 }

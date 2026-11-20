@@ -31,21 +31,26 @@ function isCacheable(value: Value): boolean {
   return arr.every((r) => !r.error && !r.temporaryUnavailable);
 }
 
+/**
+ * `cached` es true cuando NO salió ninguna petición nueva hacia el operador:
+ * el valor vino de la caché o de una consulta idéntica que ya iba en vuelo.
+ * El contador de uso lo necesita para no contar peticiones que no ocurrieron.
+ */
 export async function cachedLookup(
   provider: string,
   curp: string,
   fn: (curp: string) => Promise<Value>,
-): Promise<Value> {
+): Promise<{ value: Value; cached: boolean }> {
   const key = keyFor(provider, curp);
   const now = Date.now();
 
   const hit = store.get(key);
-  if (hit && hit.expires > now) return hit.value;
+  if (hit && hit.expires > now) return { value: hit.value, cached: true };
   if (hit) store.delete(key); // expirado
 
   // Dedup: reutiliza una consulta idéntica que ya está en vuelo.
   const inFlight = pending.get(key);
-  if (inFlight) return inFlight;
+  if (inFlight) return { value: await inFlight, cached: true };
 
   const promise = (async () => {
     const value = await fn(curp);
@@ -61,7 +66,7 @@ export async function cachedLookup(
 
   pending.set(key, promise);
   try {
-    return await promise;
+    return { value: await promise, cached: false };
   } finally {
     pending.delete(key);
   }

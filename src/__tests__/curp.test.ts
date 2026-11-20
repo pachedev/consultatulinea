@@ -78,3 +78,12 @@ describe("getCurpValidationError", () => {
     expect(err).toBeTruthy();
   });
 });
+
+describe("maskCurp", () => {
+  it("deja las 4 primeras letras y los 2 últimos caracteres", async () => {
+    const { maskCurp } = await import("@/lib/curp");
+    expect(maskCurp("PABG960529HMCCTR00")).toBe("PABG••••••••••••00");
+    expect(maskCurp("PABG960529HMCCTR00")).toHaveLength(18);
+    expect(maskCurp("ABC")).toBe("•••");
+  });
+});

@@ -1,55 +1,17 @@
 import type { Metadata } from "next";
+import {
+  DATA_ROWS,
+  PRIVACY_CHANGELOG,
+  PRIVACY_META,
+  PRIVACY_SECTIONS,
+} from "@/lib/data/privacy";
 
 export const metadata: Metadata = {
   title: "Aviso de privacidad",
   description:
-    "Cómo ConsultaTuLínea protege tu información: privacidad por diseño, sin almacenamiento de CURP, números ni resultados.",
+    "Qué datos trata ConsultaTuLínea, para qué, dónde viven y cuánto tiempo: sin almacenamiento de CURP, números ni resultados.",
   alternates: { canonical: "/aviso-de-privacidad" },
 };
-
-const SECTIONS: { title: string; body: string[] }[] = [
-  {
-    title: "Responsable e independencia",
-    body: [
-      "ConsultaTuLínea es un proyecto independiente y de código abierto. No pertenece a la Comisión Reguladora de Telecomunicaciones (CRT) ni a ningún operador, y no sustituye los portales oficiales de consulta o registro.",
-    ],
-  },
-  {
-    title: "Qué datos tratamos",
-    body: [
-      "Para realizar una consulta, ingresas tu CURP. Tu CURP viaja cifrada (TLS) a nuestro servidor, que es quien consulta los mecanismos públicos de verificación de cada operador y te devuelve el resultado en pantalla.",
-      "No almacenamos tu CURP, tus números telefónicos ni los resultados de la consulta en ninguna base de datos del proyecto, y la CURP se omite de los registros técnicos del sistema.",
-      "Para no repetir la misma consulta contra los operadores en cuestión de minutos, el resultado puede permanecer unos minutos en memoria volátil, indexado con una huella irreversible (SHA-256) de la CURP y nunca con la CURP en claro. Esa memoria se pierde al reiniciar el servicio.",
-    ],
-  },
-  {
-    title: "Cómo salen las consultas (proxies)",
-    body: [
-      "Varios operadores bloquean el tráfico que proviene de centros de datos. Para que tu consulta llegue igual que la de cualquier persona, una parte de las peticiones sale a través de servicios de proxy, incluidos proxies residenciales.",
-      "El proxy únicamente cambia la dirección IP desde la que sale la consulta hacia el operador. Tu dirección IP nunca se comparte con el operador ni con el proxy, y no se les envía ningún dato adicional tuyo.",
-      "Lo indicamos de forma explícita porque creemos que debes saber por dónde viaja tu consulta, aunque el tratamiento de tu CURP no cambia en absoluto.",
-    ],
-  },
-  {
-    title: "Privacidad por diseño",
-    body: [
-      "El proyecto está diseñado bajo el enfoque de Privacy by Design: la información sensible no transita ni permanece en la infraestructura del proyecto más allá de lo estrictamente necesario para devolverte el resultado en pantalla.",
-      "El historial reciente de CURP que ves en la aplicación se guarda únicamente en tu navegador (localStorage) y puedes borrarlo en cualquier momento.",
-    ],
-  },
-  {
-    title: "Uso legítimo",
-    body: [
-      "La herramienta está pensada para consultar tu propio CURP. Consultar el CURP de terceras personas sin su consentimiento puede ser contrario a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares y otras disposiciones aplicables en México.",
-    ],
-  },
-  {
-    title: "Tus derechos ARCO",
-    body: [
-      "Puedes ejercer tus derechos de Acceso, Rectificación, Cancelación y Oposición directamente ante el operador correspondiente. En la ficha de cada operador encontrarás el enlace a su portal oficial.",
-    ],
-  },
-];
 
 export default function AvisoPrivacidadPage() {
   return (
@@ -59,13 +21,54 @@ export default function AvisoPrivacidadPage() {
           Aviso de privacidad
         </h1>
         <p className="mt-3 text-pretty text-ink-soft">
-          La privacidad es un principio fundamental de ConsultaTuLínea. Este
-          aviso explica, en lenguaje claro, cómo se maneja tu información.
+          Este aviso explica, en lenguaje claro, qué hace el sistema con tu
+          información. Describe el funcionamiento real del sitio, no una
+          intención.
+        </p>
+        <p className="tabular mt-3 text-xs tracking-[0.18em] text-ink-faint uppercase">
+          Última actualización:{" "}
+          <time dateTime={PRIVACY_META.lastUpdatedIso}>
+            {PRIVACY_META.lastUpdated}
+          </time>
         </p>
 
-        <div className="mt-10 space-y-8">
-          {SECTIONS.map((section) => (
-            <section key={section.title}>
+        {PRIVACY_META.draft ? (
+          <p
+            role="note"
+            className="mt-6 rounded-lg border border-possible/30 bg-possible-bg px-3.5 py-3 text-sm text-possible"
+          >
+            Borrador en revisión. Los datos marcados como [PENDIENTE] se
+            completarán antes de la publicación definitiva.
+          </p>
+        ) : null}
+
+        <nav
+          aria-label="En esta página"
+          className="mt-8 rounded-xl border border-line bg-surface p-5"
+        >
+          <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
+            En esta página
+          </h2>
+          <ol className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
+            {PRIVACY_SECTIONS.map((section, index) => (
+              <li key={section.id}>
+                <a
+                  href={`#${section.id}`}
+                  className="text-ink-soft underline decoration-line-strong underline-offset-2 hover:text-ink hover:decoration-ink"
+                >
+                  <span className="tabular text-ink-faint">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>{" "}
+                  {section.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div className="mt-10 space-y-10">
+          {PRIVACY_SECTIONS.map((section) => (
+            <section key={section.id} id={section.id} className="scroll-mt-20">
               <h2 className="font-display text-xl font-bold tracking-tight text-ink">
                 {section.title}
               </h2>
@@ -76,8 +79,78 @@ export default function AvisoPrivacidadPage() {
                   </p>
                 ))}
               </div>
+
+              {section.bullets ? (
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-ink-soft">
+                  {section.bullets.map((b) => (
+                    <li key={b} className="text-pretty">
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              {section.table ? (
+                <dl className="mt-4 grid gap-px overflow-hidden rounded-xl border border-line bg-line">
+                  {DATA_ROWS.map((row) => (
+                    <div key={row.dato} className="bg-surface p-4">
+                      <dt className="font-medium text-ink">{row.dato}</dt>
+                      <dd className="mt-1.5 grid gap-1 text-sm text-ink-soft">
+                        <span>
+                          <span className="text-ink-faint">Para qué: </span>
+                          {row.finalidad}
+                        </span>
+                        <span>
+                          <span className="text-ink-faint">Dónde: </span>
+                          {row.donde}
+                        </span>
+                        <span>
+                          <span className="text-ink-faint">Cuánto: </span>
+                          {row.retencion}
+                        </span>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
+              {section.links ? (
+                <ul className="mt-3 space-y-1 text-sm">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </section>
           ))}
+
+          <section id="historial" className="scroll-mt-20">
+            <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
+              Historial de cambios
+            </h2>
+            <ul className="mt-3 space-y-2 text-sm text-ink-soft">
+              {PRIVACY_CHANGELOG.map((entry) => (
+                <li key={entry.date}>
+                  <time
+                    dateTime={entry.date}
+                    className="tabular text-ink-faint"
+                  >
+                    {entry.date}
+                  </time>{" "}
+                  — {entry.change}
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </article>
     </main>

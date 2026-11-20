@@ -9,8 +9,14 @@ export type LineResult = {
   temporaryUnavailable?: boolean;
   /** Portal oficial para consulta manual cuando la consulta automática falla. */
   portalUrl?: string;
-  rawApiResponse?: unknown;
 };
+
+/**
+ * Lo que sale del servidor hacia el navegador. Hoy tiene la misma forma que
+ * `LineResult`, pero el nombre marca la frontera: un valor de este tipo ya
+ * pasó por `toPublicResult` (lista blanca de campos, sin datos crudos).
+ */
+export type PublicLineResult = LineResult;
 
 export interface DisplayLine {
   id: string;
@@ -63,7 +69,6 @@ export interface ProviderResult {
   error?: string;
   temporaryUnavailable?: boolean;
   portalUrl?: string;
-  rawApiResponse?: unknown;
 }
 
 export interface ProviderResponse {

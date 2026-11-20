@@ -36,7 +36,7 @@ export function ResultsHeader({
   ).length;
   const risk = getRiskLevel(results);
   // El avance se mide contra los proveedores que realmente se consultan, no
-  // contra las 104 marcas: una sola petición (Red Altan) cubre 65 marcas, así
+  // contra el total de marcas: una sola petición (Red Altan) cubre 89 marcas, así
   // que dividir entre el total dejaba la barra clavada en ~19% al terminar.
   const pct = Math.min(100, (providersDone / ACTIVE_LOOKUP_PROVIDERS) * 100);
 

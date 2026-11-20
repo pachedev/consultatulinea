@@ -88,11 +88,10 @@ describe("transformApiResponse", () => {
     };
     const lines = transformApiResponse([resp]);
     const possibles = lines.filter((l) => l.isPossible);
-    expect(possibles).toHaveLength(2);
-    expect(possibles.map((l) => l.operadora).sort()).toEqual([
-      "BienCel",
-      "Sky",
-    ]);
+    // Una línea sin marca confirmada es UNA tarjeta, no una por candidata.
+    expect(possibles).toHaveLength(1);
+    expect(possibles[0].operadora).toBe("Altán");
+    expect(possibles[0].disclaimer).toContain("Sky, BienCel");
   });
 
   it("sorts: confirmed < possible < notFound < unavailable < error", () => {

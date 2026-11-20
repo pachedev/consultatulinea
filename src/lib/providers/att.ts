@@ -126,7 +126,6 @@ async function attempt(curp: string): Promise<LineResult | null | typeof BLOCKED
       company: "AT&T",
       lines,
       isRegistered: true,
-      rawApiResponse: validationData,
     };
   }
 

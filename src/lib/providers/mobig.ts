@@ -1,5 +1,5 @@
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape, maskMsisdn } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const BASE_URL = "https://mobig.mx";
@@ -92,7 +92,7 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
   if (!searchResponse.ok) {
     console.error(
       `[mobig] search POST failed: ${searchResponse.status}`,
-      JSON.stringify(stripCURPs(data), null, 2),
+      describeShape(data),
     );
     return {
       company: "Mobig",
@@ -115,11 +115,16 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
   // el array adentro. Verificado 2026-08-08: hoy responde la forma objeto.
   // Leer solo una de las dos hacía que el check de "sin líneas" nunca matchee y
   // TODA consulta cayera al return de abajo como registrada.
+  // Verificado 2026-11-14 con una consulta real: ahora responde
+  // `{ data: { last_digits: [] } }`, sin `msisdns`. Al no reconocerla, toda
+  // consulta sin líneas salía como "no disponible" en vez de "sin registro".
   const msisdns = Array.isArray(data.data)
     ? (data.data as unknown[])
     : Array.isArray(data.data?.msisdns)
       ? (data.data.msisdns as unknown[])
-      : null;
+      : Array.isArray(data.data?.last_digits)
+        ? (data.data.last_digits as unknown[])
+        : null;
 
   // Forma desconocida => no asumimos registro. Un falso positivo aquí le dice al
   // usuario que tiene una línea a su nombre que no reconoce; perder cobertura
@@ -128,7 +133,7 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
   if (msisdns === null) {
     console.error(
       "[mobig] forma de respuesta no reconocida:",
-      JSON.stringify(stripCURPs(data), null, 2),
+      describeShape(data),
     );
     return {
       company: "Mobig",
@@ -145,14 +150,18 @@ export async function lookupCURPINMobig(curp: string): Promise<LineResult> {
     };
   }
 
-  console.log(
-    "[mobig] registered response:",
-    JSON.stringify(stripCURPs(data), null, 2),
-  );
+  // Solo los últimos 4 dígitos, venga lo que venga en el arreglo (hoy
+  // `last_digits`; antes números completos en `msisdns`).
+  const lines = msisdns
+    .filter((m) => typeof m === "string" || typeof m === "number")
+    .map(maskMsisdn)
+    .filter((m) => /\d{4}$/.test(m))
+    .map((m) => `Mobig: ${m}`);
+
+  console.log("[mobig] registered");
   return {
     company: "Mobig",
-    lines: [],
+    lines,
     isRegistered: true,
-    rawApiResponse: data,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import { CoverageSection } from "@/components/home/CoverageSection";
 import { CurpForm } from "@/components/home/CurpForm";
 import { EmptyState } from "@/components/home/EmptyState";
@@ -18,15 +18,14 @@ import { cn } from "@/lib/utils";
 export function HomeView() {
   const [curp, setCurp] = useState("");
   const [submittedCurp, setSubmittedCurp] = useState("");
-  const { history, saveToHistory } = useCurpHistory();
+  const { history, saveToHistory, clearHistory } = useCurpHistory();
   const lookup = useLookup();
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (turnstileToken: string) => {
     if (!CURP_REGEX.test(curp)) return;
     saveToHistory(curp);
     setSubmittedCurp(curp);
-    lookup.consultar(curp);
+    lookup.consultar(curp, turnstileToken);
   };
 
   // Elegir una búsqueda reciente solo cambiaba el input: los resultados de la
@@ -57,6 +56,7 @@ export function HomeView() {
       onSubmit={onSubmit}
       onRetry={lookup.retry}
       onSelectHistory={onSelectHistory}
+      onClearHistory={clearHistory}
     />
   );
 

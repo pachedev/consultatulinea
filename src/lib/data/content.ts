@@ -44,24 +44,35 @@ export const WHY_CARDS: { icon: LucideIcon; title: string; body: string }[] = [
   },
 ];
 
+// Mantener alineado con src/lib/data/privacy.ts: cada frase de aquí debe
+// poder sostenerse con lo que dice el aviso de privacidad.
 export const SECURITY_BULLETS = [
   "Conexiones cifradas en tránsito (TLS/HTTPS).",
   "Tu CURP no se guarda en base de datos ni en registros del sistema.",
-  "No almacenamos tus números ni los resultados de la consulta.",
+  "Del operador solo sale hacia tu navegador el nombre de la marca y los últimos 4 dígitos.",
   "Las consultas salen desde nuestros servidores: tu IP nunca llega al operador.",
-  "Tu historial reciente vive solo en tu navegador.",
+  "Una verificación anti-bots (Cloudflare Turnstile) protege la consulta; no recibe tu CURP.",
+  "Tu historial reciente vive solo en tu navegador y puedes borrarlo.",
   "Proyecto open source y auditable.",
 ];
 
 export const ARCO_RIGHTS = [
-  { t: "Acceso", d: "Conoce qué datos tienen de ti" },
-  { t: "Rectificación", d: "Corrige lo inexacto" },
-  { t: "Cancelación", d: "Elimina tus datos" },
-  { t: "Oposición", d: "Niégate al uso" },
+  { t: "Acceso", d: "Conoce qué datos tiene la operadora sobre ti." },
+  { t: "Rectificación", d: "Solicita corregir datos inexactos o incompletos." },
+  { t: "Cancelación", d: "Solicita eliminar tus datos cuando proceda." },
+  {
+    t: "Oposición",
+    d: "Solicita que dejen de usar tus datos para ciertos fines.",
+  },
 ];
 
+// Ley Federal de Protección de Datos Personales en Posesión de los
+// Particulares, texto publicado por la Cámara de Diputados.
+export const LFPDPPP_URL =
+  "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf";
+
 // Proveedores que consulta /api/lookup. NO es lo mismo que TOTAL_PROVIDERS: una
-// sola petición puede cubrir decenas de marcas (Red Altan cubre 65). Sirve para
+// sola petición puede cubrir decenas de marcas (Red Altan cubre 89). Sirve para
 // que la barra de progreso avance sobre algo real; antes dividía entre
 // TOTAL_PROVIDERS y se congelaba al ~19%. Mantener sincronizado con el array
 // `providers` de src/app/api/lookup/route.ts (hay un test que lo verifica).

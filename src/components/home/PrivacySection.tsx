@@ -1,5 +1,7 @@
-import { Check } from "lucide-react";
-import { ARCO_RIGHTS, SECURITY_BULLETS } from "@/lib/data/content";
+import { ArrowUpRight, Check } from "lucide-react";
+import Link from "next/link";
+import { ARCO_RIGHTS, LFPDPPP_URL, SECURITY_BULLETS } from "@/lib/data/content";
+import { SITE } from "@/lib/data/site";
 
 export function PrivacySection() {
   return (
@@ -24,6 +26,12 @@ export function PrivacySection() {
               </li>
             ))}
           </ul>
+          <Link
+            href="/aviso-de-privacidad"
+            className="mt-6 inline-block text-sm text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"
+          >
+            Leer el aviso de privacidad completo
+          </Link>
         </div>
 
         <div id="arco" className="scroll-mt-20">
@@ -42,6 +50,26 @@ export function PrivacySection() {
               </div>
             ))}
           </dl>
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <a
+              href={LFPDPPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-ink-soft underline decoration-line-strong underline-offset-2 hover:text-ink hover:decoration-ink"
+            >
+              Consultar la ley
+              <ArrowUpRight className="size-3.5" aria-hidden />
+            </a>
+            <a
+              href={SITE.reportFraud}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-ink-soft underline decoration-line-strong underline-offset-2 hover:text-ink hover:decoration-ink"
+            >
+              Reportar ante la CRT
+              <ArrowUpRight className="size-3.5" aria-hidden />
+            </a>
+          </div>
         </div>
       </div>
     </section>

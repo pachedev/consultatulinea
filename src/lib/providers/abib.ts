@@ -1,6 +1,6 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { proxyFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const TIMEOUT_MS = 12_000;
@@ -56,19 +56,18 @@ export async function lookupCURPInABIB(curp: string): Promise<LineResult> {
     }
 
     if (data.success !== true && !data.status) {
-      console.error("[abib] forma no reconocida:", stripCURPs(data));
+      console.error("[abib] forma no reconocida:", describeShape(data));
       return { company: "ABIB", lines: [], temporaryUnavailable: true };
     }
 
     console.log(
       "[abib] registered:",
-      JSON.stringify(stripCURPs(data), null, 2),
+      describeShape(data),
     );
     return {
       company: "ABIB",
       lines: [],
       isRegistered: true,
-      rawApiResponse: data,
     };
   } catch (err) {
     console.error(

@@ -9,14 +9,17 @@ import { lookupCURPInMirlo } from "@/lib/providers/mirlo";
 import { lookupCURPINNextorMovil } from "@/lib/providers/nextor-movil";
 import { lookupCURPInSorcel } from "@/lib/providers/sorcel";
 import { loookupCURPInTalentoNetMVNO } from "@/lib/providers/talentonet/mvno";
+import { lookupCURPInViasat } from "@/lib/providers/viasat";
 import { loookupCURPInVirginMobile } from "@/lib/providers/virgin-mobile";
 import { loookupCURPINWeeex } from "@/lib/providers/weex";
 
 // Mega Móvil sale por el proxy residencial, no por el fetch global.
 const proxyFetch = vi.hoisted(() => vi.fn());
+const sessionClose = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@/lib/providers/_proxy", () => ({
   residentialFetch: proxyFetch,
   proxyFetch,
+  newResidentialSession: () => ({ fetch: proxyFetch, close: sessionClose }),
   hasProxy: false,
   hasResidentialProxy: false,
 }));
@@ -55,6 +58,110 @@ describe("ACTIVE_LOOKUP_PROVIDERS", () => {
       .filter((line) => /^\s{4}provider: "/.test(line)).length;
 
     expect(active).toBe(ACTIVE_LOOKUP_PROVIDERS);
+  });
+
+  // Bait, Red Potencia y Wiicel figuraban como "soportadas" sin que ningún
+  // provider las consultara: el sitio prometía una cobertura que no existía y
+  // el aviso de "no cubre" las omitía.
+  it("toda operadora soportada aparece en algún provider", async () => {
+    const { readdirSync } = await import("node:fs");
+    const { OPERATORS, getOperatorDisplayStatus } = await import(
+      "@/lib/data/operators"
+    );
+    const dir = join(process.cwd(), "src/lib/providers");
+    const files = readdirSync(dir, { recursive: true, encoding: "utf8" })
+      .filter((f) => f.endsWith(".ts"))
+      .map((f) => readFileSync(join(dir, f), "utf8"))
+      .join("\n")
+      .toLowerCase();
+    const missing = OPERATORS.filter(
+      (o) => getOperatorDisplayStatus(o) === "supported",
+    )
+      .map((o) => o.name)
+      .filter((name) => !files.includes(name.toLowerCase()));
+
+    expect(missing).toEqual([]);
+  });
+
+  // AT&T responde lo mismo para cualquier CURP (MisLíneas 88030e0): activarlo
+  // mostraría a todos dos líneas falsas.
+  it("AT&T sigue fuera del fan-out", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/app/api/lookup/route.ts"),
+      "utf8",
+    );
+    expect(source).not.toMatch(/^\s{4}provider: "AT&T"/m);
+  });
+});
+
+describe("viasat", () => {
+  // Respuesta real capturada con una CURP ficticia (2026-11-20).
+  it("reporta sin registro con la lista vacía", async () => {
+    mockFetch({
+      result: "success",
+      message: "Transacción existosa",
+      code: 1,
+      data: { list: [] },
+    });
+
+    const result = await lookupCURPInViasat(CURP);
+
+    expect(result.isRegistered).toBe(false);
+    expect(result.temporaryUnavailable).toBeUndefined();
+  });
+
+  it("enmascara el DN y omite los vínculos rechazados", async () => {
+    mockFetch({
+      result: "success",
+      data: {
+        list: [
+          { DN: "5551234567", linkStatus: "ACTIVE" },
+          { DN: 5559876543, linkStatus: "IN_PROCESS" },
+          { DN: "5550000000", linkStatus: "REJECTED" },
+        ],
+      },
+    });
+
+    const result = await lookupCURPInViasat(CURP);
+
+    expect(result.isRegistered).toBe(true);
+    expect(result.lines).toEqual([
+      "Viasat: ******4567",
+      "Viasat: ******6543 (en proceso de validación)",
+    ]);
+    const text = JSON.stringify(result);
+    expect(text).not.toContain("5551234567");
+    expect(text).not.toContain("5559876543");
+    expect(text).not.toContain("0000");
+  });
+
+  it("solo rechazados es sin registro", async () => {
+    mockFetch({
+      result: "success",
+      data: { list: [{ DN: "5550000000", linkStatus: "REJECTED" }] },
+    });
+
+    expect((await lookupCURPInViasat(CURP)).isRegistered).toBe(false);
+  });
+
+  it("no afirma nada ante una forma desconocida", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch({ result: "error", message: "falla" });
+
+    const result = await lookupCURPInViasat(CURP);
+
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+
+  it("marca error ante un 500", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch({}, { ok: false, status: 500 });
+
+    const result = await lookupCURPInViasat(CURP);
+
+    expect(result.error).toBeDefined();
+    expect(result.isRegistered).toBeUndefined();
   });
 });
 
@@ -256,12 +363,13 @@ describe("sorcel", () => {
   // Este es el falso positivo que upstream reprodujo con CURPs de usuarios
   // reales: la página de Cloudflare no contiene "No hay registros", y sin la
   // guarda se declaraba `isRegistered: true`.
+  const CF_BLOCK = res({
+    text: "<html><title>Attention Required! | Cloudflare</title></html>",
+  });
+
   it("NO afirma registro ante un challenge de Cloudflare", async () => {
-    proxyFetch.mockResolvedValueOnce(
-      res({
-        text: "<html><title>Attention Required! | Cloudflare</title></html>",
-      }),
-    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    proxyFetch.mockResolvedValue(CF_BLOCK);
 
     const result = await lookupCURPInSorcel(CURP);
 
@@ -269,13 +377,42 @@ describe("sorcel", () => {
     expect(result.temporaryUnavailable).toBe(true);
   });
 
-  it("marca indisponible ante 403", async () => {
-    proxyFetch.mockResolvedValueOnce(res({ ok: false, status: 403 }));
+  // Portado de MisLíneas (5178b43): cada intento abre una sesión nueva del
+  // proxy, que rota la IP de salida.
+  it("reintenta con otra sesión si Cloudflare bloquea la IP", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    sessionClose.mockClear();
+    proxyFetch
+      .mockResolvedValueOnce(CF_BLOCK)
+      .mockResolvedValueOnce(res({ text: NO_RECORDS }));
 
     const result = await lookupCURPInSorcel(CURP);
 
+    expect(result.isRegistered).toBe(false);
+    expect(proxyFetch).toHaveBeenCalledTimes(2);
+    expect(sessionClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("reintenta ante 403 y se rinde tras 3 intentos", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    proxyFetch.mockResolvedValue(res({ ok: false, status: 403 }));
+
+    const result = await lookupCURPInSorcel(CURP);
+
+    expect(proxyFetch).toHaveBeenCalledTimes(3);
     expect(result.temporaryUnavailable).toBe(true);
     expect(result.error).toBeUndefined();
+  });
+
+  it("no reintenta una página desconocida que no es de Cloudflare", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    proxyFetch.mockResolvedValue(res({ text: "<html>mantenimiento</html>" }));
+
+    const result = await lookupCURPInSorcel(CURP);
+
+    expect(proxyFetch).toHaveBeenCalledTimes(1);
+    expect(result.temporaryUnavailable).toBe(true);
   });
 
   it("marca indisponible ante timeout", async () => {
@@ -520,6 +657,51 @@ describe("abib", () => {
 
     const result = await lookupCURPInABIB(CURP);
 
+    expect(result.isRegistered).toBeUndefined();
+    expect(result.temporaryUnavailable).toBe(true);
+  });
+});
+
+describe("MoBig — formas de respuesta", () => {
+  // Mobig pide primero una página con el token CSRF y luego hace el POST.
+  const mobigFetch = (searchBody: unknown) =>
+    vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { getSetCookie: () => ["s=1; Path=/"], get: () => null },
+        text: async () => '<meta name="csrf-token" content="tok">',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => searchBody,
+      });
+
+  it("`last_digits` vacío es sin registro, no 'no disponible'", async () => {
+    const { lookupCURPINMobig } = await import("@/lib/providers/mobig");
+    vi.stubGlobal(
+      "fetch",
+      mobigFetch({ status: 200, message: "ok", data: { last_digits: [] } }),
+    );
+    const result = await lookupCURPINMobig(CURP);
+    expect(result).toMatchObject({ isRegistered: false, lines: [] });
+    expect(result.temporaryUnavailable).toBeUndefined();
+  });
+
+  it("`last_digits` con elementos es registro", async () => {
+    const { lookupCURPINMobig } = await import("@/lib/providers/mobig");
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubGlobal("fetch", mobigFetch({ data: { last_digits: ["0414"] } }));
+    expect((await lookupCURPINMobig(CURP)).isRegistered).toBe(true);
+  });
+
+  it("una forma desconocida sigue sin asumirse como registro", async () => {
+    const { lookupCURPINMobig } = await import("@/lib/providers/mobig");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal("fetch", mobigFetch({ data: { otra_cosa: 1 } }));
+    const result = await lookupCURPINMobig(CURP);
     expect(result.isRegistered).toBeUndefined();
     expect(result.temporaryUnavailable).toBe(true);
   });

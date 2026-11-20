@@ -167,10 +167,6 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive">
           {`(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`}
         </Script>
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="lazyOnload"
-        />
         <JsonLd data={siteJsonLd} />
         <Navbar />
         <AlertBanner />

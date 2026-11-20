@@ -19,6 +19,7 @@ export const PROVIDER_PORTALS: Record<string, string> = {
   Weex: "https://weex.mx/consultalineas.html",
   "Yo Mobile": "https://mx.yomobile.com/consulta",
   "Virgin Mobile": "https://mi.virginmobile.mx/v1/consultatulinea",
+  Viasat: "https://viasatprepago.com.mx/vinculatulinea/",
   // Reactivados vía proxy residencial (2026-08-31). Si el proxy no alcanza a
   // pasar, el provider devuelve temporaryUnavailable y la tarjeta enlaza aquí.
   Sorcel: CONSULTA_URLS.Sorcel,

@@ -1,7 +1,7 @@
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { residentialFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const COMPANY = "Newww";
@@ -42,7 +42,7 @@ export async function loookupCURPInTalentoNetMVNO(
 
       console.error(
         "[talentonet] 404 con cuerpo inesperado:",
-        stripCURPs(data),
+        describeShape(data),
       );
       return {
         company: COMPANY,
@@ -82,14 +82,13 @@ export async function loookupCURPInTalentoNetMVNO(
 
     console.log(
       "[talentonet] registered response:",
-      JSON.stringify(stripCURPs(data), null, 2),
+      describeShape(data),
     );
     return {
       company: COMPANY,
       lines: [],
       possibleProviders,
       isRegistered: true,
-      rawApiResponse: data,
     };
   } catch (err) {
     const name = (err as Error)?.name;

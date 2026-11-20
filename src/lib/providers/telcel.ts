@@ -9,8 +9,11 @@ const REQUEST_TIMEOUT_MS = 10000;
 const LOG_PREFIX = "[telcel]";
 const LOOKUP_MAX_ATTEMPTS = 2;
 const LOOKUP_RETRY_DELAYS_MS = [1000];
-const VALIDATION_MAX_ATTEMPTS = 2;
-const VALIDATION_RETRY_DELAYS_MS = [250];
+// Subido de 2 (tomado de la referencia, e64db78): registro.telcel.com responde
+// 503 en ráfagas del 40-80% sin importar el proxy, y con 2 intentos Telcel
+// salía a menudo como "no disponible". Cada intento es un POST JSON pequeño.
+const VALIDATION_MAX_ATTEMPTS = 4;
+const VALIDATION_RETRY_DELAYS_MS = [250, 500, 750];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -205,7 +208,6 @@ export async function lookupCURPInTelcel(curp: string): Promise<LineResult> {
             validationResponse.status,
             validationResponse.raw,
           ),
-          rawApiResponse: validationResponse.raw,
         };
       }
 
@@ -235,7 +237,6 @@ export async function lookupCURPInTelcel(curp: string): Promise<LineResult> {
           lines: [],
           error:
             data.errorList[0].businessMeaning || data.errorList[0].description,
-          rawApiResponse: data,
         };
       }
 
@@ -244,7 +245,6 @@ export async function lookupCURPInTelcel(curp: string): Promise<LineResult> {
           company: "Telcel",
           lines: [],
           isRegistered: true,
-          rawApiResponse: data,
         };
       }
 
@@ -252,7 +252,6 @@ export async function lookupCURPInTelcel(curp: string): Promise<LineResult> {
         company: "Telcel",
         lines: [],
         error: "Unexpected Telcel response",
-        rawApiResponse: data,
       };
     }
 

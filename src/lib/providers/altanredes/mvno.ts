@@ -69,6 +69,34 @@ export const ALTAN_MVNO_PROVIDERS = [
   "VivaMX",
   "Wiki Katat",
   "Wimotelecom",
+  // Agregadas por MisLíneas (859d646, 2026-11-16) desde el padrón de Altán.
+  // Abib se consulta por aquí: su API propia (abib.ts) sigue deshabilitada.
+  "Abib",
+  "Axios Mobile",
+  "Bnext",
+  "Conectacel México",
+  "Chuliphone",
+  "Hicel",
+  "Inphonity",
+  "Conec-Rural",
+  "JRmovil",
+  "Likephone",
+  "Maya Móvil",
+  "MOVER-T Móvil",
+  "Miio",
+  "Mujer Móvil",
+  "Netwey",
+  "Ocean Móvil",
+  "Orange",
+  "Pagacel",
+  "Redy Movil",
+  "Rex Movil",
+  "Sueñainc",
+  "Softcell",
+  "Valor Telecomm",
+  // Ya figuraba como soportada sin estar en ninguna lista; su portal de
+  // consulta es el RNU de Altán (consultaUrls.ts).
+  "Turbored",
 ];
 
 export async function lookupCURPInAltanMVNO(curp: string): Promise<LineResult> {
@@ -283,6 +311,5 @@ export async function lookupCURPInAltanMVNO(curp: string): Promise<LineResult> {
     lines,
     isRegistered: true,
     notFoundProviders,
-    rawApiResponse: validationData,
   };
 }

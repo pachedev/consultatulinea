@@ -13,3 +13,13 @@ export function getCurpValidationError(curp: string): string | null {
     return "Formato de CURP inválido. Verifica que los 18 caracteres sean correctos.";
   return null;
 }
+
+/**
+ * CURP para mostrar en pantalla sin exponerla completa: primeras 4 letras y
+ * los 2 últimos caracteres (`PABG••••••••••••00`). Alcanza para que su dueño
+ * la reconozca y no para que alguien que mira la pantalla la copie.
+ */
+export function maskCurp(curp: string): string {
+  if (curp.length <= 6) return "•".repeat(curp.length);
+  return `${curp.slice(0, 4)}${"•".repeat(curp.length - 6)}${curp.slice(-2)}`;
+}

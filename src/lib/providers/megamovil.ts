@@ -1,6 +1,5 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { residentialFetch as proxyFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const TIMEOUT_MS = 12_000;
@@ -93,10 +92,8 @@ export async function lookupCURPInMegamovil(curp: string): Promise<LineResult> {
     const html = await listRes.text().catch(() => "");
     const lines = html.match(/(\*{6}\d{4})/g) ?? [];
 
-    console.log(
-      "[megamovil] registered:",
-      JSON.stringify(stripCURPs(data), null, 2),
-    );
+    // Sin volcar el cuerpo: trae datos personales del titular.
+    console.log("[megamovil] registered");
 
     // code "0" ya confirma vinculación; si el HTML cambió y no pudimos extraer
     // los números, marcamos registrada sin líneas (el front muestra
@@ -105,7 +102,6 @@ export async function lookupCURPInMegamovil(curp: string): Promise<LineResult> {
       company: COMPANY,
       lines,
       isRegistered: true,
-      rawApiResponse: data,
     };
   } catch (err) {
     console.error(

@@ -3,8 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Turnstile } from "@/components/ui/Turnstile";
-
-const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+import { TURNSTILE_SITE_KEY as SITE_KEY } from "@/lib/turnstile-client";
 
 type Kind =
   | "app_problem"
@@ -234,6 +233,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
             {SITE_KEY ? (
               <Turnstile
                 siteKey={SITE_KEY}
+                action="report"
                 onVerify={setToken}
                 onExpire={() => setToken("")}
                 onError={(msg) => { setToken(""); setErrorMsg(msg); }}

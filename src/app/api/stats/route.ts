@@ -10,17 +10,23 @@ import { fetchUsageStats } from "@/lib/api/stats";
  * vería el home sin contador hasta la primera revalidación. Pidiéndolo desde el
  * cliente el HTML sigue siendo estático y el número siempre es el de ahora.
  *
- * La API key del backend no sale de aquí: esta ruta es el proxy.
+ * La API key del backend no sale de aquí: esta ruta es el proxy. No añade
+ * caché propia; la del backend (30 s) es la única.
  */
 export const dynamic = "force-dynamic";
+
+const NO_STORE = { "Cache-Control": "no-store" };
 
 export async function GET() {
   const stats = await fetchUsageStats();
   if (!stats) {
-    return NextResponse.json({ total_lookups: null }, { status: 503 });
+    return NextResponse.json(
+      { available: false },
+      { status: 503, headers: NO_STORE },
+    );
   }
   return NextResponse.json(
-    { total_lookups: stats.total_lookups },
-    { headers: { "Cache-Control": "public, max-age=30, s-maxage=60" } },
+    { available: true, ...stats },
+    { headers: NO_STORE },
   );
 }

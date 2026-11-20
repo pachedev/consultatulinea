@@ -1,6 +1,6 @@
 import { BROWSER_HEADERS } from "@/lib/providers/_headers";
 import { proxyFetch } from "@/lib/providers/_proxy";
-import { stripCURPs } from "@/lib/sanitize";
+import { describeShape } from "@/lib/sanitize";
 import type { LineResult } from "@/types";
 
 const TIMEOUT_MS = 12_000;
@@ -55,22 +55,16 @@ export async function lookupCURPInMirlo(curp: string): Promise<LineResult> {
     // acierto. Un error del API con otro texto (o el mensaje reescrito por
     // ellos) convertía un fallo en "tienes una línea a tu nombre".
     if (typeof data.status === "number" && data.status >= 400) {
-      console.error(
-        "[mirlo] error no reconocido:",
-        JSON.stringify(stripCURPs(data)),
-      );
+      console.error("[mirlo] error no reconocido:", describeShape(data));
       return { company: "Mirlo", lines: [], temporaryUnavailable: true };
     }
 
-    console.log(
-      "[mirlo] registered:",
-      JSON.stringify(stripCURPs(data), null, 2),
-    );
+    // Sin volcar el cuerpo: trae datos personales del titular.
+    console.log("[mirlo] registered");
     return {
       company: "Mirlo",
       lines: [],
       isRegistered: true,
-      rawApiResponse: data,
     };
   } catch (err) {
     console.error(

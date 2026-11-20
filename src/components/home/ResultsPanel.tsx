@@ -1,11 +1,12 @@
 "use client";
 
-import { Flag, MessageSquareWarning, Search } from "lucide-react";
+import { Flag, Info, MessageSquareWarning, Search } from "lucide-react";
 import { useState } from "react";
 import { FilterTabs } from "@/components/home/FilterTabs";
 import { ReportModal } from "@/components/home/ReportModal";
 import { ResultsHeader } from "@/components/home/ResultsHeader";
 import { ResultsList } from "@/components/home/ResultsList";
+import { getOperatorDisplayStatus, OPERATORS } from "@/lib/data/operators";
 import {
   buildCsvExport,
   buildExportEvidencePayload,
@@ -13,6 +14,15 @@ import {
   getExportFilename,
 } from "@/lib/export";
 import type { DisplayLine, ExportIntegrity, FilterTab } from "@/types";
+
+// Marcas que la gente más espera ver y que hoy no se consultan en automático.
+// Se nombran arriba de los resultados para que una línea que no aparece no se
+// lea como "no está registrada".
+const UNCOVERED_POPULAR = OPERATORS.filter(
+  (op) =>
+    getOperatorDisplayStatus(op) !== "supported" &&
+    /AT&T|Unefon|Bait|Movistar/i.test(op.name),
+).map((op) => op.name);
 
 type Props = {
   results: DisplayLine[];
@@ -171,6 +181,21 @@ export function ResultsPanel({
               Repórtalo aquí
             </button>{" "}
             para que lo revisemos.
+          </p>
+        </div>
+      ) : null}
+
+      {!loading && UNCOVERED_POPULAR.length > 0 ? (
+        <div
+          role="note"
+          className="flex gap-3 rounded-xl border border-info/30 bg-info-bg p-4 text-sm text-info"
+        >
+          <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
+          <p>
+            Este resultado no cubre {UNCOVERED_POPULAR.join(", ")}: hoy no
+            podemos consultarlas en automático. Si tu línea es de alguna de
+            ellas, que no aparezca aquí no significa que no esté registrada;
+            verifícalo en su portal oficial.
           </p>
         </div>
       ) : null}
