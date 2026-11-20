@@ -20,7 +20,7 @@ export function CopyButton({ text }: { text: string }) {
       onClick={copy}
       aria-label={copied ? "Copiado" : "Copiar número"}
       title={copied ? "Copiado" : "Copiar"}
-      className="inline-flex size-8 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
+      className="inline-flex size-9 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
     >
       {copied ? (
         <Check className="size-4 text-confirmed" aria-hidden />

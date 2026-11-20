@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import { Geist_Mono, Instrument_Sans } from "next/font/google";
 import Script from "next/script";
-import { AlertBanner } from "@/components/layout/AlertBanner";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -70,19 +69,15 @@ const siteJsonLd = {
   ],
 };
 
-const display = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "700"],
-});
-
-const sans = IBM_Plex_Sans({
+// Una sola familia para títulos y texto (Instrument Sans); la mono solo para
+// datos: CURP y números de línea enmascarados.
+const sans = Instrument_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const mono = IBM_Plex_Mono({
+const mono = Geist_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -160,7 +155,7 @@ export default function RootLayout({
     <html
       lang="es-MX"
       suppressHydrationWarning
-      className={`${display.variable} ${sans.variable} ${mono.variable} h-full antialiased`}
+      className={`${sans.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {/* Aplica el tema guardado antes del primer paint (evita parpadeo). */}
@@ -169,7 +164,6 @@ export default function RootLayout({
         </Script>
         <JsonLd data={siteJsonLd} />
         <Navbar />
-        <AlertBanner />
         <div className="flex flex-1 flex-col">{children}</div>
         <Footer />
       </body>

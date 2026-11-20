@@ -62,14 +62,14 @@ export function ThemeToggle() {
         aria-label="Cambiar tema de color"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
+        className="inline-flex h-10 items-center gap-1 rounded-lg px-2.5 text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
       >
         <CurrentIcon className="size-4" aria-hidden />
         <ChevronDown className="size-3.5 text-ink-faint" aria-hidden />
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-1.5 w-36 overflow-hidden rounded-lg border border-line bg-surface p-1 shadow-lg">
+        <div className="absolute right-0 z-50 mt-1.5 w-36 overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-card">
           {OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const active = theme === opt.value;

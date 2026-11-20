@@ -25,7 +25,7 @@ export function FilterTabs({
             aria-pressed={isActive}
             onClick={() => onChange(tab.key)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors",
               isActive
                 ? "border-ink bg-ink text-paper"
                 : "border-line bg-surface text-ink-soft hover:border-line-strong hover:text-ink",
@@ -34,9 +34,9 @@ export function FilterTabs({
             {tab.label}
             <span
               className={cn(
-                "tabular rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                "rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums",
                 isActive
-                  ? "bg-paper/20 text-paper"
+                  ? "bg-paper/25 text-paper"
                   : "bg-surface-2 text-ink-faint",
               )}
             >

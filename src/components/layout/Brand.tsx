@@ -29,7 +29,7 @@ export function Brand({ className }: { className?: string }) {
           className="brand-icon-dark size-7"
         />
       </span>
-      <span className="font-display text-[0.95rem] font-bold tracking-tight">
+      <span className="text-base font-semibold tracking-tight">
         ConsultaTuLínea
       </span>
     </Link>

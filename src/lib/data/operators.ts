@@ -116,7 +116,13 @@ export const OPERATORS: OperatorEntry[] = [
   { name: "Izzi", status: "paused", reason: "Requiere inicio de sesión." },
   { name: "JRmovil", status: "supported" },
   { name: "Likephone", status: "supported" },
-  { name: "Link Móvil", status: "supported" },
+  // Solo la cubría TalentoNet, deshabilitado en el route (igual que Newww y
+  // Red Aguila). Figuraba como soportada sin que nadie la consultara.
+  {
+    name: "Link Móvil",
+    status: "paused",
+    reason: "El proxy sólo conecta en 1 de cada 4 intentos.",
+  },
   { name: "Kolors Mobile", status: "supported" },
   { name: "Maifon", status: "supported" },
   { name: "Maya Móvil", status: "supported" },
@@ -130,7 +136,8 @@ export const OPERATORS: OperatorEntry[] = [
   },
   { name: "Miio", status: "supported" },
   { name: "Mirlo", status: "supported" },
-  { name: "MoBig", status: "verify", reason: "Falta verificar." },
+  // Activa en el route; verificada con CURP reales el 2026-11-14.
+  { name: "MoBig", status: "supported" },
   {
     name: "Mosi",
     status: "paused",
@@ -201,7 +208,12 @@ export const OPERATORS: OperatorEntry[] = [
     reason: "Requiere login para consultar líneas.",
   },
   { name: "Softcell", status: "supported" },
-  { name: "Sorcel", status: "supported" },
+  {
+    name: "Sorcel",
+    status: "paused",
+    reason:
+      "Cloudflare bloquea la consulta desde nuestro servidor. Consulta en su portal oficial.",
+  },
   { name: "Spot 1", status: "supported" },
   { name: "Starline", status: "supported" },
   { name: "Sueñainc", status: "supported" },

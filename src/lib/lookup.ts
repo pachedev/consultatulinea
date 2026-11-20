@@ -169,20 +169,20 @@ export function getRiskLevel(lines: DisplayLine[]): {
   if (confirmed === 0 && possible === 0)
     return {
       label: "Sin Registro",
-      color: "bg-slate-400",
+      color: "bg-none",
       description: "Sin líneas vinculadas",
       reason: "No se encontraron líneas confirmadas ni posibles.",
     };
   if (confirmed <= 2 && possible === 0)
     return {
       label: "Bajo",
-      color: "bg-emerald-500",
+      color: "bg-confirmed",
       description: "Identidad protegida y consistente",
       reason: `${confirmed} ${confirmed === 1 ? "línea confirmada" : "líneas confirmadas"}, dentro de lo esperado para una persona.`,
     };
   return {
     label: "Moderado",
-    color: "bg-amber-500",
+    color: "bg-possible",
     description: "Revisar líneas detectadas",
     reason:
       confirmed > 2

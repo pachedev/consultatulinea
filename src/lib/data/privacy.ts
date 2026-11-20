@@ -4,7 +4,8 @@
  * Vive en datos y no en JSX para que cada cambio quede en git con su fecha.
  * REGLA: este texto describe lo que el sistema HACE. Si cambia el código
  * (qué se guarda, a quién se envía, cuánto dura), cambia este archivo en el
- * mismo commit y se añade una entrada a PRIVACY_CHANGELOG.
+ * mismo commit y actualiza `lastUpdated`. El historial de cambios es el del
+ * repositorio público.
  */
 
 /** Marcador de datos que faltan por definir antes de publicar. */
@@ -12,12 +13,13 @@ export const PENDING = "[PENDIENTE]";
 
 export const PRIVACY_META = {
   /** true mientras queden marcadores PENDIENTE o falte la revisión legal. */
-  draft: true,
-  lastUpdated: "14 de noviembre de 2026",
-  lastUpdatedIso: "2026-11-14",
-  responsible: PENDING,
-  contact: PENDING,
-  reportRetention: PENDING,
+  draft: false,
+  lastUpdated: "20 de noviembre de 2026",
+  lastUpdatedIso: "2026-11-20",
+  responsible: "el autor del proyecto (Pachedev)",
+  contact: "contacto@pachedev.com",
+  reportRetention: "90 días",
+  hosting: "Oracle Cloud",
 } as const;
 
 export type DataRow = {
@@ -89,11 +91,17 @@ export type PrivacySection = {
 export const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     id: "responsable",
-    title: "Responsable y contacto",
+    title: "Responsable del tratamiento de datos",
     body: [
-      `Responsable del tratamiento: ${PRIVACY_META.responsible}.`,
+      "ConsultaTuLínea es una plataforma ciudadana independiente, de código abierto y sin fines de lucro, disponible en consultatulinea.mx. El responsable del tratamiento de los datos es el autor del proyecto (disponible en github.com/pachedev/consultatulinea).",
       `Contacto para asuntos de privacidad: ${PRIVACY_META.contact}.`,
-      "ConsultaTuLínea es un proyecto independiente y de código abierto. No pertenece a la Comisión Reguladora de Telecomunicaciones (CRT) ni a ningún operador, y no sustituye los portales oficiales de consulta o registro.",
+      "No pertenece a la Comisión Reguladora de Telecomunicaciones (CRT) ni a ningún operador, y no sustituye los portales oficiales de consulta o registro.",
+    ],
+    links: [
+      {
+        label: "Repositorio del proyecto",
+        href: "https://github.com/pachedev/consultatulinea",
+      },
     ],
   },
   {
@@ -126,7 +134,7 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       "Operadores de telefonía: reciben tu CURP en sus mecanismos públicos de verificación. No reciben tu dirección IP.",
       "Servicios de proxy, incluidos proxies residenciales y la red Tor: varios operadores bloquean el tráfico de centros de datos, así que parte de las consultas sale a través de ellos. El proxy transporta la conexión cifrada hacia el operador y no recibe tu IP.",
       "Cloudflare (Turnstile): ver la sección siguiente.",
-      `Proveedor de alojamiento: ${PENDING}.`,
+      `Proveedor de alojamiento: ${PRIVACY_META.hosting}. El sitio y su servidor corren en una instancia de cómputo propia del proyecto; las consultas se procesan ahí y no se guardan.`,
     ],
   },
   {
@@ -173,7 +181,6 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     title: "Registros técnicos",
     body: [
       "El servidor registra errores de funcionamiento (qué operador no respondió, códigos de estado, tiempos). La CURP se omite de esos registros y no se anota el contenido de las respuestas de los operadores.",
-      `Registros de acceso del proxy inverso (dirección IP y ruta solicitada): ${PENDING}.`,
     ],
   },
   {
@@ -203,13 +210,5 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     body: [
       "Cualquier cambio se publica en esta página con su fecha. El historial completo está en el repositorio público del proyecto.",
     ],
-  },
-];
-
-export const PRIVACY_CHANGELOG: { date: string; change: string }[] = [
-  {
-    date: "2026-11-14",
-    change:
-      "Reescritura completa: tabla de datos y retención, Cloudflare Turnstile, reportes, estadísticas, almacenamiento local y registros técnicos.",
   },
 ];

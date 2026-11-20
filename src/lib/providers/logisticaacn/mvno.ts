@@ -1,7 +1,8 @@
 import { PROVIDER_TIMEOUT_MS } from "@/lib/data/content";
 import type { LineResult } from "@/types";
 
-const possibleProviders = ["FedeGo!", "Flash Mobile", "Dua"];
+export const LOGISTICA_ACN_PROVIDERS = ["FedeGo!", "Flash Mobile", "Dua"];
+const possibleProviders = LOGISTICA_ACN_PROVIDERS;
 
 export async function lookupCURPInLogisticaACN(
   curp: string,

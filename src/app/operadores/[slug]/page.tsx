@@ -1,7 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
-  ExternalLink,
+  ArrowUpRight,
   ShieldCheck,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -14,6 +14,7 @@ import {
   getOperatorProfile,
   type OperatorProfile,
 } from "@/lib/data/operatorProfiles";
+import { getOperatorNetwork } from "@/lib/operatorNetworks";
 import {
   getOperatorBySlug,
   getOperatorSlugs,
@@ -164,48 +165,51 @@ export default async function OperatorPage({
   const status = await fetchStatus();
   const override = findOverride(status.operators, operator.name);
   const isDown = override && override.state !== "available";
+  const network = profile?.network ?? getOperatorNetwork(operator.name);
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="bg-glow-top flex flex-1 flex-col">
       <JsonLd data={makeBreadcrumbJsonLd(operator)} />
       <JsonLd data={makeOrganizationJsonLd(operator)} />
       {profile ? <JsonLd data={makeHowToJsonLd(operator, profile)} /> : null}
       {profile?.faq.length ? <JsonLd data={makeFaqJsonLd(profile)} /> : null}
 
-      <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
+      <div className="mx-auto w-full max-w-3xl px-4 pt-5 pb-16">
         <Link
           href="/operadores"
-          className="inline-flex items-center gap-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
+          className="-ml-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
         >
-          <ArrowLeft className="size-4" aria-hidden />
-          Operadores
+          <ArrowLeft className="size-[18px]" aria-hidden />
+          Operadoras
         </Link>
 
-        <header className="mt-6">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        <header className="mt-4">
+          <h1 className="text-[clamp(2rem,1.4rem+3.2vw,3.25rem)] font-semibold tracking-[-0.03em] text-ink">
             {operator.name}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusChip status={operator.status} />
             {isDown ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-possible/30 bg-possible-bg px-2.5 py-0.5 text-xs font-medium text-possible">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-possible-bg px-2 py-0.5 text-[11px] font-semibold text-possible">
                 <AlertTriangle className="size-3" aria-hidden />
                 {override.state === "paused" ? "Pausado" : "No disponible"}
               </span>
             ) : null}
-            {profile?.network ? (
-              <span className="inline-flex items-center rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-xs text-ink-soft">
-                {profile.network}
+            {network ? (
+              <span className="inline-flex items-center rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
+                {network}
               </span>
             ) : null}
           </div>
           {profile ? (
-            <p className="mt-5 text-pretty text-ink-soft">{profile.intro}</p>
+            <p className="mt-4 max-w-[60ch] text-pretty text-ink-faint">
+              {profile.intro}
+            </p>
           ) : null}
         </header>
 
         {isDown ? (
-          <div className="mt-6 flex gap-3 rounded-xl border border-possible/30 bg-possible-bg p-4 text-sm text-possible">
+          <div className="mt-6 flex gap-3 rounded-xl border border-possible/25 bg-possible-bg p-4 text-sm text-possible">
             <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
             <div>
               <p className="font-medium">
@@ -220,18 +224,16 @@ export default async function OperatorPage({
           </div>
         ) : null}
 
-        <section className="mt-8 rounded-xl border border-line bg-surface p-6">
-          <h2 className="text-sm font-medium tracking-wide text-ink-soft uppercase">
-            Cómo consultar
-          </h2>
-          <p className="mt-2 text-pretty text-ink">{guidance(operator)}</p>
+        <section className="edge-card mt-8 rounded-[18px] p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-ink">Cómo consultar</h2>
+          <p className="mt-2 text-pretty text-ink-soft">{guidance(operator)}</p>
 
           {profile ? (
-            <ol className="mt-5 space-y-2.5 border-l border-line pl-5">
+            <ol className="mt-5 space-y-2.5 border-l-2 border-accent-soft pl-5">
               {profile.steps.map((step, i) => (
                 <li key={step} className="text-sm text-ink-soft">
-                  <span className="tabular mr-2 font-medium text-ink-faint">
-                    {String(i + 1).padStart(2, "0")}
+                  <span className="mr-2 font-semibold text-accent tabular-nums">
+                    {i + 1}.
                   </span>
                   {step}
                 </li>
@@ -243,7 +245,7 @@ export default async function OperatorPage({
             {operator.status === "supported" && !isDown ? (
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-5 py-2.5 font-medium text-paper transition hover:opacity-90"
+                className="btn-primary-glow inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 font-semibold text-accent-ink transition hover:brightness-105"
               >
                 <ShieldCheck className="size-4" aria-hidden />
                 Consultar con mi CURP
@@ -255,31 +257,33 @@ export default async function OperatorPage({
                 target="_blank"
                 rel="noopener noreferrer nofollow"
                 className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-medium transition",
+                  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold transition",
                   operator.status === "supported" && !isDown
-                    ? "border border-line text-ink hover:border-line-strong"
-                    : "bg-ink text-paper hover:opacity-90",
+                    ? "border border-line bg-surface text-ink hover:border-line-strong"
+                    : "btn-primary-glow bg-accent text-accent-ink hover:brightness-105",
                 )}
               >
-                <ExternalLink className="size-4" aria-hidden />
                 Plataforma oficial de consulta
+                <ArrowUpRight className="size-4" aria-hidden />
+                <span className="sr-only"> (se abre en otra pestaña)</span>
               </a>
             ) : operator.website ? (
               <a
                 href={operator.website}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-5 py-2.5 font-medium text-ink transition hover:border-line-strong"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 font-semibold text-ink transition hover:border-line-strong"
               >
-                <ExternalLink className="size-4" aria-hidden />
                 Sitio del operador
+                <ArrowUpRight className="size-4" aria-hidden />
+                <span className="sr-only"> (se abre en otra pestaña)</span>
               </a>
             ) : null}
           </div>
         </section>
 
         {operator.reason ? (
-          <p className="mt-4 rounded-lg border border-line bg-surface-2 p-4 text-sm text-ink-soft">
+          <p className="mt-4 rounded-xl border border-line bg-surface p-4 text-sm text-ink-soft">
             <span className="font-medium text-ink">Nota: </span>
             {operator.reason}
           </p>
@@ -290,7 +294,7 @@ export default async function OperatorPage({
             {profile.notes.map((note) => (
               <li
                 key={note}
-                className="rounded-lg border border-line bg-surface-2 p-4 text-sm text-ink-soft"
+                className="rounded-xl border border-line bg-surface p-4 text-sm text-ink-soft"
               >
                 {note}
               </li>
@@ -300,16 +304,16 @@ export default async function OperatorPage({
 
         {profile?.faq.length ? (
           <section className="mt-10">
-            <h2 className="font-display text-xl font-bold tracking-tight text-ink">
+            <h2 className="text-xl font-semibold tracking-tight text-ink">
               Preguntas sobre {operator.name}
             </h2>
             <div className="mt-4 divide-y divide-line border-y border-line">
               {profile.faq.map((item) => (
                 <details key={item.q} className="group py-4">
-                  <summary className="cursor-pointer list-none font-medium text-ink">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-medium text-ink after:size-2 after:shrink-0 after:rotate-45 after:border-r-2 after:border-b-2 after:border-ink-faint after:transition-transform group-open:after:-rotate-135">
                     {item.q}
                   </summary>
-                  <p className="mt-3 text-pretty text-sm text-ink-soft">
+                  <p className="mt-2 text-pretty text-sm text-ink-faint">
                     {item.a}
                   </p>
                 </details>

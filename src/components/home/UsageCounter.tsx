@@ -94,12 +94,17 @@ export function UsageCounter() {
   if (total <= 0) return null;
 
   return (
-    <div className="relative mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-      <p className="tabular text-xs tracking-[0.18em] text-ink-faint uppercase">
-        <span className="font-medium text-ink-soft">
+    <div className="relative flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      {/* Indicador vivo */}
+      <span
+        className="size-2 shrink-0 rounded-full bg-confirmed shadow-[0_0_0_4px_color-mix(in_srgb,var(--confirmed)_20%,transparent)]"
+        aria-hidden
+      />
+      <p className="text-ink-faint">
+        <span className="font-semibold text-ink tabular-nums">
           {formatter.format(value)}
         </span>{" "}
-        consultas a operadores
+        consultas a operadoras
       </p>
       <CounterInfo />
     </div>
@@ -135,14 +140,15 @@ function CounterInfo() {
         aria-expanded={open}
         aria-controls="contador-info"
         aria-label="Qué significa este número"
-        className="inline-flex size-5 items-center justify-center rounded-full border border-line-strong text-[11px] font-medium text-ink-faint transition-colors hover:border-ink hover:text-ink"
+        className="inline-flex size-[22px] items-center justify-center rounded-full border border-line-strong text-[11px] font-semibold text-ink-faint transition-colors hover:border-ink hover:text-ink aria-expanded:border-ink aria-expanded:text-ink"
       >
         ?
       </button>
       {open ? (
         <span
           id="contador-info"
-          className="absolute top-full left-0 z-20 mt-2 block w-64 rounded-lg border border-line bg-surface p-3 text-xs leading-relaxed text-ink-soft shadow-lg"
+          role="note"
+          className="absolute top-full right-0 z-30 mt-2 block w-64 rounded-xl border border-line bg-surface p-3 text-xs leading-relaxed text-ink-soft shadow-card sm:right-auto sm:left-1/2 sm:-translate-x-1/2"
         >
           Cada búsqueda consulta a varios operadores a la vez. Este número suma
           todas esas consultas. Solo contamos; no guardamos tu CURP ni tus

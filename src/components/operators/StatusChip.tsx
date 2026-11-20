@@ -12,7 +12,7 @@ const META: Record<
     bg: "bg-confirmed-bg",
   },
   unsupported: {
-    label: "Solo portal oficial",
+    label: "Solo portal",
     dot: "bg-error",
     text: "text-error",
     bg: "bg-error-bg",
@@ -36,7 +36,7 @@ export function StatusChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold",
         meta.bg,
         meta.text,
         className,

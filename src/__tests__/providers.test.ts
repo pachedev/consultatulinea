@@ -63,15 +63,31 @@ describe("ACTIVE_LOOKUP_PROVIDERS", () => {
   // Bait, Red Potencia y Wiicel figuraban como "soportadas" sin que ningún
   // provider las consultara: el sitio prometía una cobertura que no existía y
   // el aviso de "no cubre" las omitía.
-  it("toda operadora soportada aparece en algún provider", async () => {
+  // Solo cuentan los providers ACTIVOS del route: un nombre en _portals.ts o en
+  // un provider comentado (TalentoNet tenía a Link Móvil) no es cobertura.
+  it("toda operadora soportada la cubre un provider activo", async () => {
     const { readdirSync } = await import("node:fs");
     const { OPERATORS, getOperatorDisplayStatus } = await import(
       "@/lib/data/operators"
     );
+    const route = readFileSync(
+      join(process.cwd(), "src/app/api/lookup/route.ts"),
+      "utf8",
+    );
+    const activeFns = [...route.matchAll(/^\s{4}lookupFunction: (\w+),/gm)].map(
+      (m) => m[1],
+    );
+    expect(activeFns.length).toBe(ACTIVE_LOOKUP_PROVIDERS);
+
     const dir = join(process.cwd(), "src/lib/providers");
     const files = readdirSync(dir, { recursive: true, encoding: "utf8" })
-      .filter((f) => f.endsWith(".ts"))
+      .filter((f) => f.endsWith(".ts") && !f.split("/").pop()?.startsWith("_"))
       .map((f) => readFileSync(join(dir, f), "utf8"))
+      .filter((src) =>
+        activeFns.some((fn) =>
+          new RegExp(`export async function ${fn}\\b`).test(src),
+        ),
+      )
       .join("\n")
       .toLowerCase();
     const missing = OPERATORS.filter(

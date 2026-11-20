@@ -6,7 +6,7 @@ import type { LineResult } from "@/types";
 
 const SECRET_KEY = "key_t3lcel_prod";
 
-const FREEDOMPOP_PROVIDERS = [
+export const FREEDOMPOP_PROVIDERS = [
   "AhorroCel",
   "Chedraui Móvil",
   "Freedompop",

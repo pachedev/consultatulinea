@@ -1,8 +1,8 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Turnstile } from "@/components/ui/Turnstile";
+import { Turnstile, type TurnstileStatus } from "@/components/ui/Turnstile";
 import { TURNSTILE_SITE_KEY as SITE_KEY } from "@/lib/turnstile-client";
 
 type Kind =
@@ -39,6 +39,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
   const [state, setState] = useState<State>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [resetKey, setResetKey] = useState(0);
+  const [tsStatus, setTsStatus] = useState<TurnstileStatus>("loading");
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
     setToken("");
     setState("idle");
     setErrorMsg("");
+    setTsStatus("loading");
   }, [open, operator]);
 
   useEffect(() => {
@@ -75,7 +77,10 @@ export function ReportModal({ open, onClose, operator }: Props) {
       setErrorMsg("El mensaje debe tener al menos 5 caracteres.");
       return;
     }
-    if (contact.trim() && !/^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(contact.trim())) {
+    if (
+      contact.trim() &&
+      !/^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(contact.trim())
+    ) {
       setErrorMsg("Formato de correo electrónico inválido.");
       return;
     }
@@ -118,19 +123,19 @@ export function ReportModal({ open, onClose, operator }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-[rgb(8_14_26/0.45)] backdrop-blur-sm sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-xl">
-        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="font-semibold text-ink">Enviar reporte</h2>
+      <div className="flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[20px] border border-line bg-surface pb-[env(safe-area-inset-bottom)] shadow-card sm:max-h-[calc(100dvh-2rem)] sm:rounded-[20px] sm:pb-0">
+        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-lg font-semibold text-ink">Enviar reporte</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-md p-1 text-ink-faint transition-colors hover:bg-surface hover:text-ink"
+            className="-mr-2 inline-flex size-10 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
           >
             <X className="size-5" />
           </button>
@@ -146,7 +151,10 @@ export function ReportModal({ open, onClose, operator }: Props) {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto px-5 py-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 overflow-y-auto px-5 py-5"
+          >
             <div>
               <label
                 htmlFor="report-kind"
@@ -158,7 +166,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 id="report-kind"
                 value={kind}
                 onChange={(e) => setKind(e.target.value as Kind)}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-line-strong focus:ring-2 focus:ring-ink/10"
+                className="min-h-11 w-full rounded-[10px] border border-line-strong bg-surface px-3 py-2.5 text-base text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent-soft"
               >
                 {(Object.keys(KIND_LABELS) as Kind[]).map((k) => (
                   <option key={k} value={k}>
@@ -183,7 +191,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 onChange={(e) => setOperatorVal(e.target.value)}
                 placeholder="Ej. Telcel, AT&T, Altán…"
                 maxLength={120}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-line-strong focus:ring-2 focus:ring-ink/10"
+                className="min-h-11 w-full rounded-[10px] border border-line-strong bg-surface px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-4 focus:ring-accent-soft"
               />
             </div>
 
@@ -204,7 +212,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 minLength={5}
                 maxLength={2000}
                 required
-                className="w-full resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-line-strong focus:ring-2 focus:ring-ink/10"
+                className="w-full resize-y rounded-[10px] border border-line-strong bg-surface px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-4 focus:ring-accent-soft"
               />
               <p className="mt-0.5 text-right text-xs text-ink-faint tabular-nums">
                 {message.length}/2000
@@ -226,7 +234,7 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 onChange={(e) => setContact(e.target.value)}
                 placeholder="correo@ejemplo.com"
                 maxLength={255}
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-line-strong focus:ring-2 focus:ring-ink/10"
+                className="min-h-11 w-full rounded-[10px] border border-line-strong bg-surface px-3 py-2.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-4 focus:ring-accent-soft"
               />
             </div>
 
@@ -236,13 +244,40 @@ export function ReportModal({ open, onClose, operator }: Props) {
                 action="report"
                 onVerify={setToken}
                 onExpire={() => setToken("")}
-                onError={(msg) => { setToken(""); setErrorMsg(msg); }}
+                onError={(msg) => {
+                  setToken("");
+                  setErrorMsg(msg);
+                }}
+                onStatusChange={setTsStatus}
                 resetKey={resetKey}
               />
             ) : null}
 
+            {/* El widget es invisible salvo que Cloudflare pida interacción;
+                esta línea deja claro que la verificación está corriendo. */}
+            {SITE_KEY && tsStatus !== "failed" ? (
+              <p
+                aria-live="polite"
+                className="flex items-center gap-2 text-sm text-ink-soft"
+              >
+                {tsStatus === "ready" ? (
+                  <Check className="size-4 text-confirmed" aria-hidden />
+                ) : (
+                  <Loader2
+                    className="size-4 animate-spin text-ink-faint"
+                    aria-hidden
+                  />
+                )}
+                {tsStatus === "ready"
+                  ? "Verificado por Cloudflare Turnstile"
+                  : tsStatus === "expired"
+                    ? "La verificación expiró; se renovará sola."
+                    : "Verificando que no eres un bot…"}
+              </p>
+            ) : null}
+
             {errorMsg ? (
-              <p className="rounded-lg border border-error/30 bg-error-bg px-3 py-2 text-sm text-error">
+              <p className="rounded-[10px] bg-error-bg px-3 py-2.5 text-sm text-error">
                 {errorMsg}
               </p>
             ) : null}
@@ -251,14 +286,14 @@ export function ReportModal({ open, onClose, operator }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-line px-4 py-2 text-sm text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
+                className="min-h-11 flex-1 rounded-xl border border-line px-4 text-sm font-semibold text-ink transition-colors hover:border-line-strong sm:flex-none"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={state === "loading"}
-                className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-ink/80 disabled:opacity-50"
+                className="btn-primary-glow min-h-11 flex-1 rounded-xl bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:brightness-105 disabled:opacity-50 sm:flex-none"
               >
                 {state === "loading" ? "Enviando…" : "Enviar reporte"}
               </button>

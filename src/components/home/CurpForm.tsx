@@ -2,11 +2,11 @@
 
 import {
   AlertCircle,
-  ArrowRight,
+  ArrowUpRight,
   ClipboardPaste,
   Loader2,
+  Lock,
   Search,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -105,15 +105,33 @@ export function CurpForm({
     } catch {}
   };
 
+  const isComplete = curp.length === 18;
+  const statusText = validationError
+    ? validationError
+    : isComplete && isValid
+      ? "CURP completa."
+      : curp.length > 0
+        ? "Sigue escribiendo."
+        : "Puedes pegarla completa.";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label
-          htmlFor="curp-input"
-          className="mb-2 flex items-center justify-between text-xs font-medium tracking-wide text-ink-soft uppercase"
-        >
-          <span>Ingresa tu CURP para comenzar</span>
-        </label>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <label htmlFor="curp-input" className="font-semibold text-ink">
+            Tu CURP
+          </label>
+          <a
+            href="https://www.gob.mx/curp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium whitespace-nowrap text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+          >
+            No la sé
+            <ArrowUpRight className="size-3" aria-hidden />
+            <span className="sr-only"> (se abre en otra pestaña)</span>
+          </a>
+        </div>
 
         <div className="relative">
           <input
@@ -123,33 +141,32 @@ export function CurpForm({
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
-            placeholder="Ej. ABCD000000HDFXYZ01"
+            placeholder="18 letras y números"
             maxLength={18}
             disabled={loading}
             value={curp}
             onChange={(e) => setCurp(sanitize(e.target.value))}
             aria-invalid={!!validationError}
-            aria-describedby={validationError ? "curp-error" : undefined}
+            aria-describedby="curp-status"
             className={cn(
-              "tabular w-full rounded-lg border bg-surface py-3.5 pr-28 pl-4 text-base text-ink outline-none transition placeholder:text-ink-faint",
-              "focus:ring-2 focus:ring-ink/10",
+              "tabular h-14 w-full rounded-xl border bg-surface pr-24 pl-4 text-lg tracking-[0.06em] text-ink uppercase outline-none transition placeholder:font-sans placeholder:text-base placeholder:tracking-normal placeholder:normal-case placeholder:text-ink-faint",
+              "focus:border-accent focus:ring-4 focus:ring-accent-soft",
               validationError
-                ? "border-error focus:border-error"
-                : "border-line focus:border-line-strong",
+                ? "border-error focus:border-error focus:ring-error-bg"
+                : isComplete && isValid
+                  ? "border-confirmed"
+                  : "border-line-strong",
             )}
           />
-          <div className="absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1">
-            <span className={cn("tabular text-xs font-medium", counterColor)}>
-              {curp.length}/18
-            </span>
+          <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center">
             {curp.length > 0 && !loading ? (
               <button
                 type="button"
                 onClick={() => setCurp("")}
-                aria-label="Limpiar CURP"
-                className="inline-flex size-7 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
+                aria-label="Borrar CURP"
+                className="inline-flex size-11 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
               >
-                <X className="size-3.5" aria-hidden />
+                <X className="size-[18px]" aria-hidden />
               </button>
             ) : null}
             <button
@@ -157,45 +174,40 @@ export function CurpForm({
               onClick={handlePaste}
               aria-label="Pegar CURP desde el portapapeles"
               title="Pegar"
-              className="inline-flex size-7 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
+              className="inline-flex size-11 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink"
             >
-              <ClipboardPaste className="size-4" aria-hidden />
+              <ClipboardPaste className="size-[18px]" aria-hidden />
             </button>
           </div>
         </div>
 
-        {validationError ? (
-          <p id="curp-error" className="mt-2 text-sm text-error" role="alert">
-            {validationError}
-          </p>
-        ) : null}
-      </div>
-
-      {/* Nota de privacidad */}
-      <div className="flex items-start gap-2.5 rounded-lg border border-confirmed/30 bg-confirmed-bg px-3.5 py-3 text-sm text-confirmed">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-        <p>
-          Tu CURP viaja cifrada, <strong>no se guarda</strong> en ninguna base
-          de datos y solo se usa para la consulta en tiempo real.
+        <p
+          id="curp-status"
+          aria-live="polite"
+          className="mt-2 flex justify-between gap-3 text-sm"
+          role={validationError ? "alert" : undefined}
+        >
+          <span
+            className={cn(
+              validationError
+                ? "text-error"
+                : isComplete && isValid
+                  ? "text-confirmed"
+                  : "text-ink-faint",
+            )}
+          >
+            {statusText}
+          </span>
+          <span className={cn("shrink-0 tabular-nums", counterColor)}>
+            {curp.length}/18
+          </span>
         </p>
       </div>
 
-      <p className="text-sm text-ink-soft">
-        ¿No recuerdas tu CURP?{" "}
-        <a
-          href="https://www.gob.mx/curp"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"
-        >
-          Consúltala en gob.mx
-        </a>
-      </p>
-
       {history.length > 0 ? (
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-ink-soft">
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <p className="text-xs font-semibold text-ink-soft">
               Búsquedas recientes
             </p>
             <span className="text-[11px] text-ink-faint">
@@ -203,13 +215,13 @@ export function CurpForm({
               <button
                 type="button"
                 onClick={onClearHistory}
-                className="underline underline-offset-2 hover:text-ink"
+                className="font-medium underline underline-offset-2 hover:text-ink"
               >
                 Borrar
               </button>
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {history.map((h) => (
               <button
                 key={h}
@@ -217,7 +229,7 @@ export function CurpForm({
                 disabled={loading}
                 onClick={() => onSelectHistory(h)}
                 aria-label={`Usar la CURP guardada que termina en ${h.slice(-2)}`}
-                className="tabular rounded-md border border-line bg-surface px-2.5 py-1 text-xs text-ink-soft transition-colors hover:border-line-strong hover:text-ink disabled:opacity-40"
+                className="tabular min-h-9 rounded-lg border border-line bg-surface px-2.5 text-xs text-ink-soft transition-colors hover:border-line-strong hover:text-ink disabled:opacity-40"
               >
                 {maskCurp(h)}
               </button>
@@ -241,37 +253,24 @@ export function CurpForm({
       <button
         type="submit"
         disabled={busy || !isValid}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3.5 font-medium text-paper transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-primary-glow inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-accent font-semibold text-accent-ink transition hover:brightness-105 active:translate-y-px disabled:border disabled:border-line disabled:bg-surface-2 disabled:text-ink-faint"
       >
         {busy ? (
           <>
             <Loader2 className="size-4 animate-spin" aria-hidden />
-            {verifying ? "Verificando…" : "Escaneando…"}
+            {verifying ? "Verificando…" : "Consultando…"}
           </>
         ) : (
           <>
             <Search className="size-4" aria-hidden />
-            Realizar consulta
-            <ArrowRight className="size-4" aria-hidden />
+            Consultar mis líneas
           </>
         )}
       </button>
 
-      {TURNSTILE_ENABLED ? (
-        <p className="text-center text-[11px] text-ink-faint">
-          Protegido contra bots por Cloudflare Turnstile.{" "}
-          <Link
-            href="/aviso-de-privacidad#verificacion"
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            Privacidad
-          </Link>
-        </p>
-      ) : null}
-
       {verifyError ? (
         <p
-          className="rounded-lg border border-error/40 bg-error-bg px-3.5 py-3 text-sm text-error"
+          className="rounded-xl bg-error-bg px-3.5 py-3 text-sm text-error"
           role="alert"
         >
           {verifyError}
@@ -280,11 +279,11 @@ export function CurpForm({
 
       {error || timedOut ? (
         <div
-          className="flex gap-3 rounded-lg border border-error/40 bg-error-bg p-4 text-sm text-error"
+          className="flex gap-3 rounded-xl bg-error-bg p-3.5 text-sm text-error"
           role="alert"
           aria-live="polite"
         >
-          <AlertCircle className="size-5 shrink-0" aria-hidden />
+          <AlertCircle className="mt-0.5 size-[18px] shrink-0" aria-hidden />
           <div>
             <p>
               {timedOut
@@ -294,13 +293,27 @@ export function CurpForm({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-1 font-medium underline underline-offset-2"
+              className="mt-1 font-semibold underline underline-offset-2"
             >
               Reintentar
             </button>
           </div>
         </div>
       ) : null}
+
+      <p className="flex items-start gap-2 text-xs text-ink-faint">
+        <Lock className="mt-px size-3.5 shrink-0" aria-hidden />
+        <span>
+          Consulta solo tu propia CURP. No la guardamos.{" "}
+          {TURNSTILE_ENABLED ? "Protegido por Cloudflare Turnstile. " : ""}
+          <Link
+            href="/aviso-de-privacidad"
+            className="text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+          >
+            Aviso de privacidad
+          </Link>
+        </span>
+      </p>
     </form>
   );
 }

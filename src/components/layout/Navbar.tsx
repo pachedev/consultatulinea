@@ -1,138 +1,138 @@
 "use client";
 
-import { Github, Heart, Menu, ShieldAlert, X } from "lucide-react";
+import { ArrowUpRight, Heart, Menu, ShieldAlert, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Brand } from "@/components/layout/Brand";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { SITE } from "@/lib/data/site";
 
 const NAV_LINKS = [
-  { href: "/#seguridad", label: "Seguridad" },
-  { href: "/#arco", label: "Derechos ARCO" },
-  // Página propia, no un ancla del home como las anteriores.
-  { href: "/operadores", label: "Operadores" },
+  { href: "/", label: "Consultar" },
+  { href: "/operadores", label: "Operadoras" },
+  { href: "/aviso-de-privacidad", label: "Privacidad" },
+  // Abre el panel de preguntas del Centro de información del inicio.
+  { href: "/#preguntas-frecuentes", label: "Preguntas" },
 ];
+
+const pill =
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors";
+// Donar en ámbar, fraude en rojo: dos acciones distintas que no deben confundirse.
+const donateCls = `${pill} border-possible/30 bg-possible-bg text-possible hover:border-possible`;
+const fraudCls = `${pill} border-danger/35 bg-error-bg text-danger hover:border-danger`;
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
 
-  return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/80 backdrop-blur-md">
-      <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4">
-        <Brand />
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
-        {/* Desktop */}
-        <div className="hidden items-center gap-5 md:flex">
+  return (
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-md backdrop-saturate-150">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
+        <Brand className="mr-auto" />
+
+        {/* Escritorio */}
+        <div className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
+              className="rounded-lg px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
             >
               {l.label}
             </Link>
           ))}
+        </div>
 
-          <span className="h-5 w-px bg-line" />
-
-          <ThemeToggle />
-
-          <a
-            href={SITE.repo}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Código fuente en GitHub"
-            title="Código fuente en GitHub"
-            className="text-ink-faint transition-colors hover:text-ink"
-          >
-            <Github className="size-5" aria-hidden />
-          </a>
-
+        <div className="hidden items-center gap-2 sm:flex">
           <a
             href={SITE.donate}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
+            className={donateCls}
           >
             <Heart className="size-4" aria-hidden />
             Donar
+            <span className="sr-only"> (se abre en otra pestaña)</span>
           </a>
-
           <a
             href={SITE.reportFraud}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-paper transition-opacity hover:opacity-90"
+            className={fraudCls}
           >
             <ShieldAlert className="size-4" aria-hidden />
             Reportar fraude
+            <ArrowUpRight className="size-3.5" aria-hidden />
+            <span className="sr-only"> (se abre en otra pestaña)</span>
           </a>
+          <ThemeToggle />
         </div>
 
-        {/* Mobile */}
-        <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            aria-label="Menú"
-            className="inline-flex size-9 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-surface hover:text-ink"
-          >
-            {open ? (
-              <X className="size-5" aria-hidden />
-            ) : (
-              <Menu className="size-5" aria-hidden />
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls="menu-movil"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          className="inline-flex size-11 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink lg:hidden"
+        >
+          {open ? (
+            <X className="size-5" aria-hidden />
+          ) : (
+            <Menu className="size-5" aria-hidden />
+          )}
+        </button>
       </nav>
 
-      {/* Panel móvil */}
+      {/* Menú móvil: en pantallas chicas Donar y Reportar fraude viven aquí */}
       {open ? (
-        <div className="border-t border-line bg-paper px-4 py-4 md:hidden">
-          <div className="flex flex-col gap-1">
+        <div
+          id="menu-movil"
+          className="border-t border-line bg-surface px-4 pt-2 pb-4 shadow-card lg:hidden"
+        >
+          <div className="mx-auto flex max-w-6xl flex-col">
             {NAV_LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2.5 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink"
+                className="flex min-h-12 items-center border-b border-line font-medium text-ink"
               >
                 {l.label}
               </Link>
             ))}
-            <a
-              href={SITE.repo}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="inline-flex items-center gap-2 rounded-lg px-3 py-2.5 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink"
-            >
-              <Github className="size-4" aria-hidden />
-              GitHub
-            </a>
-            <a
-              href={SITE.donate}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg border border-line py-2.5 font-medium text-ink transition-colors hover:border-line-strong"
-            >
-              <Heart className="size-4" aria-hidden />
-              Donar
-            </a>
-            <a
-              href={SITE.reportFraud}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink py-2.5 font-medium text-paper transition-opacity hover:opacity-90"
-            >
-              <ShieldAlert className="size-4" aria-hidden />
-              Reportar fraude
-            </a>
+            <div className="flex flex-wrap items-center gap-2 pt-4 sm:hidden">
+              <a
+                href={SITE.donate}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className={`${donateCls} min-h-11 px-4`}
+              >
+                <Heart className="size-4" aria-hidden />
+                Donar
+              </a>
+              <a
+                href={SITE.reportFraud}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className={`${fraudCls} min-h-11 px-4`}
+              >
+                <ShieldAlert className="size-4" aria-hidden />
+                Reportar fraude
+                <ArrowUpRight className="size-3.5" aria-hidden />
+              </a>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       ) : null}

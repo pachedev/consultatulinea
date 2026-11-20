@@ -1,8 +1,12 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { AlertBanner } from "@/components/layout/AlertBanner";
 import { OperatorsDirectory } from "@/components/operators/OperatorsDirectory";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { fetchStatus } from "@/lib/api/status";
 import { TOTAL_PROVIDERS } from "@/lib/data/content";
+import { getOperatorNetwork } from "@/lib/operatorNetworks";
 import { getAllOperatorViews } from "@/lib/operatorPages";
 
 const BASE = "https://consultatulinea.mx";
@@ -14,7 +18,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Operadores y marcas móviles en México",
-  description: `Directorio de los ${TOTAL_PROVIDERS} operadores y OMVs que registran líneas móviles en México. Estado de integración, portal oficial de vinculación y red de cada uno: Telcel, AT&T, Movistar, Bait, Oxxo Cel y más.`,
+  description: `Directorio de los ${TOTAL_PROVIDERS} operadores y OMVs que registran líneas móviles en México: cuáles se consultan desde aquí, cuáles solo en su portal oficial y la red de cada uno (Telcel, Red Altán, Oxxo Cel, AT&T, Movistar y más).`,
   alternates: { canonical: "/operadores" },
   keywords: [
     "operadores México telefonía móvil",
@@ -50,23 +54,38 @@ export default async function OperadoresPage() {
     })),
   };
 
+  const networks = Object.fromEntries(
+    operators.map((o) => [o.slug, getOperatorNetwork(o.name)]),
+  );
+
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="bg-glow-top flex flex-1 flex-col">
       <JsonLd data={itemListJsonLd} />
-      <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
-        <header className="mb-8">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-5 pb-16">
+        <Link
+          href="/"
+          className="-ml-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+        >
+          <ArrowLeft className="size-[18px]" aria-hidden />
+          Volver al inicio
+        </Link>
+
+        <AlertBanner className="mt-3 mb-2" />
+
+        <header className="pt-4 pb-6">
+          <h1 className="text-[clamp(2rem,1.4rem+3.2vw,3.25rem)] font-semibold tracking-[-0.03em] text-ink">
             Operadores y marcas
           </h1>
-          <p className="mt-3 max-w-xl text-pretty text-ink-soft">
-            Cada operador administra su propio registro. Aquí puedes ver el
-            estado de consulta de cada uno y entrar a su ficha con el portal
-            oficial.
+          <p className="mt-3 max-w-[58ch] text-pretty text-ink-faint">
+            Cada operador administra su propio registro. Aquí ves cuáles
+            consultamos en automático, cuáles solo tienen portal oficial y
+            entras a la ficha de cada uno.
           </p>
         </header>
 
         <OperatorsDirectory
           operators={operators}
+          networks={networks}
           statusOverrides={status.operators}
         />
       </div>

@@ -13,7 +13,6 @@ import {
   lookupCURPInLogisticaACN,
   lookupCURPInMegamovil,
   lookupCURPInMirlo,
-  lookupCURPInSorcel,
   lookupCURPInTelcel,
   lookupCURPInViasat,
   loookupCURPINWeeex,
@@ -159,16 +158,14 @@ const providers: Array<{
   //   // AS213541) están fichados. Forzar salida mexicana con -country-mx da
   //   // una IP MX legítima y tampoco pasa.
   // },
-  {
-    provider: "Sorcel",
-    lookupFunction: lookupCURPInSorcel,
-    // Reactivado el 2026-11-20: en producción el proxy residencial sí pasa.
-    // Cloudflare todavía bloquea algunas IPs de salida, así que el provider
-    // reintenta hasta 3 veces con una conexión nueva (otra IP) dentro del
-    // mismo presupuesto de PROVIDER_TIMEOUT_MS (MisLíneas 5178b43). Sin
-    // RESIDENTIAL_PROXY_URL sale directo y suele volver como
-    // temporaryUnavailable con el enlace a su portal.
-  },
+  // {
+  //   provider: "Sorcel",
+  //   lookupFunction: lookupCURPInSorcel,
+  //   // Deshabilitado de nuevo el 2026-11-20: tras reactivarlo no respondía.
+  //   // El provider conserva el reintento ante bloqueos de Cloudflare (hasta 3
+  //   // conexiones nuevas, MisLíneas 5178b43), así que reactivarlo es
+  //   // descomentar este bloque cuando el proxy residencial vuelva a pasar.
+  // },
   // {
   //   provider: "TalentoNet (Newww, Red Aguila, Link Móvil)",
   //   lookupFunction: loookupCURPInTalentoNetMVNO,

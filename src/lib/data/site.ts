@@ -6,6 +6,8 @@ export const SITE = {
   author: "https://pachedev.com",
   repo: "https://github.com/pachedev/consultatulinea",
   donate: "https://buymeacoffee.com/pachedev",
+  /** Contacto del proyecto y del responsable del tratamiento de datos. */
+  contact: "contacto@pachedev.com",
   // Reporte oficial de fallas/fraude ante la CRT.
   reportFraud: "https://portal.crt.gob.mx/reporte-fallas-plataforma-registro",
   // Proyecto que inspira esta iniciativa (crédito).
